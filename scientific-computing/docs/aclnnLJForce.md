@@ -1,4 +1,8 @@
 # aclnnLJForce
+## 作者
+  - **刘非** (@Magic_LF)
+## 学术指导  
+  - **黄剑兴** （@huangjianxing）
 
 ## 产品支持情况
 
