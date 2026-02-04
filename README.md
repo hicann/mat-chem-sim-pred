@@ -115,7 +115,7 @@ Lennard-Jones 势能：
 
 | 调用方式 | 样例代码 | 说明 |
 |----------|----------|------|
-| aclnn接口 | [test_aclnn_lj_force](examples/test_aclnn_lj_force.cpp) | 通过 aclnnLJForce 接口调用 LJForceFused 算子 |
+| aclnn接口 | [test_aclnn_lj_force](scientific-computing/examples/test_aclnn_lj_force.cpp) | 通过 aclnnLJForce 接口调用 LJForceFused 算子 |
 
 ## 算子特性
 
