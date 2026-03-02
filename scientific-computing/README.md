@@ -2,8 +2,7 @@
 ## 作者
   - **刘非** (@Magic_LF)
 ## 学术指导
-  - **黄剑兴** （@huangjianxing）
-
+  - **黄剑兴** （@huangjianxing），**张玉橙** （@Splendid2025）
 ## 产品支持情况
 
 | 产品 | 是否支持 |
