@@ -1,0 +1,28 @@
+{
+  "dpd_params": {
+    "dt": 0.01,
+    "rc": 1.0,
+    "a_ij": 25.0,
+    "gamma": 4.5,
+    "sigma": 3.0,
+    "kBT": 1.0,
+    "box_size": [10.0, 10.0, 10.0],
+    "num_particles": 1000,
+    "particle_mass": 1.0,
+    "random_seed": 12345,
+    "num_steps": 100,
+    "output_freq": 10,
+    "enable_energy": true,
+    "enable_pressure": false
+  },
+  "initialization": {
+    "random_positions": true,
+    "random_velocities": true,
+    "initial_temperature": 1.0
+  },
+  "performance": {
+    "num_cores": 32,
+    "vector_len": 16,
+    "double_buffer": true
+  }
+}

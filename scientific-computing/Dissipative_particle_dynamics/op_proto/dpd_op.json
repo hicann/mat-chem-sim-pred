@@ -1,0 +1,360 @@
+{
+  "op_name": "DPD",
+  "op_type": "Dynamic",
+  "framework_type": "CUSTOM",
+  "engine": "DNN",
+  "input_desc": [
+    {
+      "name": "positions",
+      "param_type": "required",
+      "format": [
+        "ND"
+      ],
+      "type": [
+        "float32",
+        "float16"
+      ],
+      "shape": [
+        "?"
+      ],
+      "shape_range": [
+        [1, 65536]
+      ],
+      "dynamic_dims": [0],
+      "dynamic_shape_type": "DYNAMIC",
+      "description": "粒子位置数据，形状为 [num_particles, 3] 或 [batch_size, num_particles, 3]"
+    },
+    {
+      "name": "velocities",
+      "param_type": "required",
+      "format": [
+        "ND"
+      ],
+      "type": [
+        "float32",
+        "float16"
+      ],
+      "shape": [
+        "?"
+      ],
+      "shape_range": [
+        [1, 65536]
+      ],
+      "dynamic_dims": [0],
+      "dynamic_shape_type": "DYNAMIC",
+      "description": "粒子速度数据，形状与位置相同"
+    },
+    {
+      "name": "params",
+      "param_type": "optional",
+      "format": [
+        "ND"
+      ],
+      "type": [
+        "float32"
+      ],
+      "shape": [14],
+      "dynamic_shape_type": "STATIC",
+      "description": "DPD模拟参数：[dt, rc, a_ij, gamma, sigma, kBT, box_size_x, box_size_y, box_size_z, num_particles, seed, num_cores, vector_len, output_freq]"
+    }
+  ],
+  "output_desc": [
+    {
+      "name": "new_positions",
+      "param_type": "required",
+      "format": [
+        "ND"
+      ],
+      "type": [
+        "float32",
+        "float16"
+      ],
+      "shape": [
+        "?"
+      ],
+      "shape_range": [
+        [1, 65536]
+      ],
+      "dynamic_dims": [0],
+      "dynamic_shape_type": "DYNAMIC",
+      "description": "更新后的粒子位置"
+    },
+    {
+      "name": "new_velocities",
+      "param_type": "required",
+      "format": [
+        "ND"
+      ],
+      "type": [
+        "float32",
+        "float16"
+      ],
+      "shape": [
+        "?"
+      ],
+      "shape_range": [
+        [1, 65536]
+      ],
+      "dynamic_dims": [0],
+      "dynamic_shape_type": "DYNAMIC",
+      "description": "更新后的粒子速度"
+    },
+    {
+      "name": "forces",
+      "param_type": "optional",
+      "format": [
+        "ND"
+      ],
+      "type": [
+        "float32",
+        "float16"
+      ],
+      "shape": [
+        "?"
+      ],
+      "shape_range": [
+        [1, 65536]
+      ],
+      "dynamic_dims": [0],
+      "dynamic_shape_type": "DYNAMIC",
+      "description": "计算出的粒子作用力"
+    },
+    {
+      "name": "energy",
+      "param_type": "optional",
+      "format": [
+        "ND"
+      ],
+      "type": [
+        "float32"
+      ],
+      "shape": [3],
+      "dynamic_shape_type": "STATIC",
+      "description": "能量输出：[kinetic_energy, potential_energy, total_energy]"
+    }
+  ],
+  "attr": [
+    {
+      "name": "dt",
+      "type": "float",
+      "value": 0.01,
+      "default_value": 0.01,
+      "description": "时间步长"
+    },
+    {
+      "name": "rc",
+      "type": "float",
+      "value": 1.0,
+      "default_value": 1.0,
+      "description": "截断半径"
+    },
+    {
+      "name": "a_ij",
+      "type": "float",
+      "value": 25.0,
+      "default_value": 25.0,
+      "description": "保守力系数"
+    },
+    {
+      "name": "gamma",
+      "type": "float",
+      "value": 4.5,
+      "default_value": 4.5,
+      "description": "耗散系数"
+    },
+    {
+      "name": "sigma",
+      "type": "float",
+      "value": 3.0,
+      "default_value": 3.0,
+      "description": "随机力系数"
+    },
+    {
+      "name": "kBT",
+      "type": "float",
+      "value": 1.0,
+      "default_value": 1.0,
+      "description": "热浴能量"
+    },
+    {
+      "name": "box_size",
+      "type": "list_float",
+      "value": [10.0, 10.0, 10.0],
+      "default_value": [10.0, 10.0, 10.0],
+      "description": "模拟盒子尺寸 [x, y, z]"
+    },
+    {
+      "name": "num_particles",
+      "type": "int",
+      "value": 1000,
+      "default_value": 1000,
+      "description": "粒子总数"
+    },
+    {
+      "name": "seed",
+      "type": "int",
+      "value": 12345,
+      "default_value": 12345,
+      "description": "随机数种子"
+    },
+    {
+      "name": "num_steps",
+      "type": "int",
+      "value": 100,
+      "default_value": 100,
+      "description": "模拟步数"
+    },
+    {
+      "name": "output_freq",
+      "type": "int",
+      "value": 10,
+      "default_value": 10,
+      "description": "输出频率"
+    },
+    {
+      "name": "enable_energy",
+      "type": "bool",
+      "value": true,
+      "default_value": true,
+      "description": "是否计算能量"
+    },
+    {
+      "name": "enable_pressure",
+      "type": "bool",
+      "value": false,
+      "default_value": false,
+      "description": "是否计算压力"
+    },
+    {
+      "name": "periodic_boundary",
+      "type": "bool",
+      "value": true,
+      "default_value": true,
+      "description": "是否使用周期性边界条件"
+    },
+    {
+      "name": "neighbor_search",
+      "type": "string",
+      "value": "cell_list",
+      "default_value": "cell_list",
+      "description": "邻居搜索算法：cell_list, verlet_list, brute_force"
+    },
+    {
+      "name": "precision",
+      "type": "string",
+      "value": "float32",
+      "default_value": "float32",
+      "description": "计算精度：float32, float16, mixed"
+    },
+    {
+      "name": "vector_len",
+      "type": "int",
+      "value": 16,
+      "default_value": 16,
+      "description": "向量化长度"
+    },
+    {
+      "name": "double_buffer",
+      "type": "bool",
+      "value": true,
+      "default_value": true,
+      "description": "是否使用双缓冲"
+    },
+    {
+      "name": "async_copy",
+      "type": "bool",
+      "value": true,
+      "default_value": true,
+      "description": "是否使用异步数据拷贝"
+    }
+  ],
+  "kernel": {
+    "bin_name": "dpd_kernel",
+    "bin_path": "./op_kernel/dpd_kernel",
+    "kernel_name": "dpd_kernel",
+    "tiling_key": "dpd_tiling",
+    "tiling_path": "./op_kernel/dpd_tiling",
+    "compile_flag": "-O2 -mcpu=tsv110 -march=armv8-a",
+    "arch": "ascend910",
+    "compute_unit": "Vector",
+    "compute_capability": "8.1",
+    "workspace": {
+      "size": 1048576,
+      "type": "L1"
+    }
+  },
+  "impl": {
+    "host_func": "dpd_host_launch",
+    "host_lib": "libdpd_host.so",
+    "check_func": "dpd_check_params",
+    "infer_shape_func": "dpd_infer_shape",
+    "compile_func": "dpd_compile",
+    "parallel_strategy": "data_parallel",
+    "device_type": "NPU",
+    "framework": "CANN"
+  },
+  "performance": {
+    "throughput": "1e6 particles/sec",
+    "latency": "1 ms/step",
+    "power": "50 W",
+    "memory": "256 MB",
+    "scalability": "linear"
+  },
+  "validation": {
+    "test_cases": [
+      {
+        "name": "unit_test",
+        "input": "test_data/unit_test_input.bin",
+        "output": "test_data/unit_test_output.bin",
+        "tolerance": 1e-6
+      },
+      {
+        "name": "performance_test",
+        "input": "test_data/performance_input.bin",
+        "output": "test_data/performance_output.bin",
+        "tolerance": 1e-4
+      },
+      {
+        "name": "accuracy_test",
+        "input": "test_data/accuracy_input.bin",
+        "output": "test_data/accuracy_output.bin",
+        "tolerance": 1e-3
+      }
+    ],
+    "metrics": [
+      "mean_absolute_error",
+      "root_mean_square_error",
+      "energy_conservation",
+      "momentum_conservation"
+    ]
+  },
+  "compatibility": {
+    "cann_version": ">=5.0.0",
+    "device_type": ["Ascend910", "Ascend310P"],
+    "os": ["Ubuntu18.04", "CentOS7.6", "EulerOS2.8"],
+    "python": ">=3.6",
+    "pytorch": ">=1.8.0"
+  },
+  "documentation": {
+    "design": "docs/dpd_op_design.md",
+    "api": "docs/api_reference.md",
+    "compile": "docs/compile_guide.md",
+    "example": "examples/README.md",
+    "tutorial": "docs/tutorial.md"
+  },
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0,
+    "build": "20260406",
+    "description": "Initial release of DPD operator for Ascend NPU"
+  },
+  "author": "DPD Operator Development Team",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/ascend-community/dpd-operator",
+  "support": {
+    "email": "dpd-support@example.com",
+    "forum": "https://forum.ascend.com/dpd",
+    "issue": "https://github.com/ascend-community/dpd-operator/issues"
+  }
+}
