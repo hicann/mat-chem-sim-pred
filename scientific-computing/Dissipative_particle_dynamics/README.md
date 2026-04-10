@@ -1,5 +1,5 @@
 # DPD Ascend C 算子
-
+作者：张强豪（[@zhangqianghao](https://gitcode.com/zhangqianghao)）
 ## 概述
 
 耗散粒子动力学（Dissipative Particle Dynamics, DPD）Ascend C算子，为华为昇腾NPU硬件优化的高性能介观粗粒化粒子模拟算子。
