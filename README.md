@@ -32,7 +32,7 @@
 - Atlas A2/A3 训练/推理卡
 - CMake ≥ 3.16
 ## 许可证选择
-本仓库以生态繁荣为目标，选取Apache 2.0。
+本仓库以生态繁荣为目标，选取[Apache 2.0](https://www.apache.org/licenses/)许可证。
 ## 算子贡献指南
 详情参考公告 [算子贡献指南1.0](https://gitcode.com/cann/mat-chem-sim-pred/discussions/1)
 ## 提交流程：
