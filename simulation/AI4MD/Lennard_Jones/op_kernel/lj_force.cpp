@@ -8,11 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  *
  * @author Liu Fei (@Magic_LF)
- */
-
-/*!
- * \file lj_force.cpp
- * \brief LJ Force Kernel Entry Point
+ * @optimized Tiled pair computation + contiguous GM output
  */
 
 #include "lj_force.h"

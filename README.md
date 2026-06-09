@@ -98,6 +98,50 @@ mat-chem-sim-pred/
 - 张强豪 1964035193@qq.com
 - 李姝漫 1404537011@qq.com
 
+## 参考资源
+
+为帮助开发者学习 Ascend C 算子开发，建议参考以下 CANN 官方仓库（可 clone 到本地 `Reference/` 目录，该目录不参与版本管理）：
+
+### 基础数学库
+
+| 仓库 | 说明 |
+|------|------|
+| [opbase](https://atomgit.com/cann/opbase) | Ascend C 算子开发基础库，提供通用宏、接口与工具 |
+| [ops-math](https://atomgit.com/cann/ops-math) | 数学运算算子库（Element-wise、Reduction 等） |
+| [ops-blas](https://atomgit.com/cann/ops-blas) | BLAS 线性代数算子库（MatMul、Gemm 等） |
+| [ops-fft](https://atomgit.com/cann/ops-fft) | 傅里叶变换算子库 |
+| [ops-sparse](https://atomgit.com/cann/ops-sparse) | 稀疏计算算子库 |
+| [ops-tensor](https://atomgit.com/cann/ops-tensor) | 张量操作算子库（Reshape、Slice、Concat 等） |
+| [ops-nn](https://atomgit.com/cann/ops-nn) | 神经网络算子库（Conv、Pool、Activation 等） |
+| [ops-rand](https://atomgit.com/cann/ops-rand) | 随机数生成算子库 |
+
+### 开发标准与调试工具
+
+| 仓库 | 说明 |
+|------|------|
+| [cann-learning-hub](https://atomgit.com/cann/cann-learning-hub) | CANN 学习中心，含教程、示例与最佳实践 |
+| [oam-tools](https://atomgit.com/cann/oam-tools) | 算子开发调试与性能分析工具集 |
+| [ops-test-kit](https://atomgit.com/cann/ops-test-kit) | 算子测试套件，用例生成与结果分析 |
+| [pypto](https://atomgit.com/cann/pypto) | PyTorch 算子自动迁移工具（PyTorch → Ascend C） |
+
+### AI Kernel 生成参考
+
+| 仓库 | 说明 |
+|------|------|
+| [cann-bench](https://atomgit.com/cann/cann-bench) | CANN 性能基准测试与 Benchmark |
+| [cannbot-skills](https://atomgit.com/cann/cannbot-skills) | CANN 开发辅助 Skills 与自动化工具 |
+| [cann-samples](https://atomgit.com/cann/cann-samples) | Ascend C 算子开发完整示例集 |
+
+### 相关参考库
+
+| 仓库 | 说明 |
+|------|------|
+| [cann-ops-competitions](https://atomgit.com/cann/cann-ops-competitions) | CANN 算子竞赛参赛作品集 |
+| [asnumpy](https://atomgit.com/cann/asnumpy) | NumPy 兼容 API，方便从 NumPy 迁移到 Ascend |
+| [ascend-boost-comm](https://atomgit.com/cann/ascend-boost-comm) | Ascend Boost 通信库 |
+
+> 可通过 `git clone` 将上述仓库下载至本地 `Reference/` 目录作为学习参考。该目录已加入 `.gitignore`，不会纳入本仓库版本管理。
+
 ## 快速上手
 
 环境要求

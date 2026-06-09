@@ -75,26 +75,15 @@ class LJForceNPU:
         N = positions.shape[0]
         positions_flat = np.ascontiguousarray(positions.flatten(), dtype=np.float32)
 
-        # 计算核数和对齐步长（与 Kernel 保持一致）
+        # 力输出：连续布局（N*3），不再分核对齐
+        force_size = N * 3 * 4  # N*3 floats * 4 bytes
+        forces_out = np.zeros(N * 3, dtype=np.float32)
+
+        # 能量数组：每个核写 8 个 float
         max_cores = 32
-        min_atoms_per_core = 16
-        optimal_cores = min((N + min_atoms_per_core - 1) // min_atoms_per_core, max_cores)
-        optimal_cores = max(optimal_cores, 1)
-        atoms_per_core = (N + optimal_cores - 1) // optimal_cores
+        energy_buf = np.zeros(8 * max_cores, dtype=np.float32)
 
-        # 对齐步长：每个核的力数组大小对齐到 8
-        force_stride = ((atoms_per_core * 3 + 7) // 8) * 8
-
-        # 分配对齐后的力数组（每个核 force_stride 个 float）
-        force_total_size = force_stride * optimal_cores
-        forces_aligned = np.zeros(force_total_size, dtype=np.float32)
-
-        # 能量数组：每个核写 8 个 float，只有第一个有效
-        energy_buf = np.zeros(8 * optimal_cores, dtype=np.float32)
-
-        # 分配设备内存
         pos_size = positions_flat.nbytes
-        force_size = forces_aligned.nbytes
         energy_size = energy_buf.nbytes
         workspace_size = 256
 
@@ -103,12 +92,8 @@ class LJForceNPU:
         energy_dev, _ = acl.rt.malloc(energy_size, 0)
         workspace_dev, _ = acl.rt.malloc(workspace_size, 0)
 
-        # 拷贝数据到设备
         acl.rt.memcpy(pos_dev, pos_size, positions_flat.ctypes.data, pos_size, 1)
-        acl.rt.memcpy(force_dev, force_size, forces_aligned.ctypes.data, force_size, 1)
-        acl.rt.memcpy(energy_dev, energy_size, energy_buf.ctypes.data, energy_size, 1)
 
-        # 调用算子
         self.lib.aclnnLJForceDirect(
             ctypes.c_void_p(pos_dev),
             ctypes.c_void_p(force_dev),
@@ -124,35 +109,17 @@ class LJForceNPU:
 
         acl.rt.synchronize_stream(self.stream)
 
-        # 拷贝结果回主机
-        acl.rt.memcpy(forces_aligned.ctypes.data, force_size, force_dev, force_size, 2)
+        acl.rt.memcpy(forces_out.ctypes.data, force_size, force_dev, force_size, 2)
         acl.rt.memcpy(energy_buf.ctypes.data, energy_size, energy_dev, energy_size, 2)
 
-        # 释放设备内存
         acl.rt.free(pos_dev)
         acl.rt.free(force_dev)
         acl.rt.free(energy_dev)
         acl.rt.free(workspace_dev)
 
-        # 从对齐布局中提取实际的力数据
-        forces = np.zeros((N, 3), dtype=np.float32)
-        for core_idx in range(optimal_cores):
-            start_atom = core_idx * atoms_per_core
-            end_atom = min(start_atom + atoms_per_core, N)
-            if start_atom >= N:
-                break
-            num_atoms_this_core = end_atom - start_atom
-            src_offset = core_idx * force_stride
-            for local_idx in range(num_atoms_this_core):
-                atom_idx = start_atom + local_idx
-                forces[atom_idx, 0] = forces_aligned[src_offset + local_idx * 3]
-                forces[atom_idx, 1] = forces_aligned[src_offset + local_idx * 3 + 1]
-                forces[atom_idx, 2] = forces_aligned[src_offset + local_idx * 3 + 2]
+        forces = forces_out.reshape(N, 3).copy()
 
-        # 从能量数组中提取各核的能量并求和
-        energy = 0.0
-        for core_idx in range(optimal_cores):
-            energy += energy_buf[core_idx * 8]
+        energy = energy_buf.sum()
 
         return forces, energy
 

@@ -1,0 +1,4 @@
+Reference/
+__pycache__/
+*.pyc
+*.pyo

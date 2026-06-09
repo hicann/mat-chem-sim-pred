@@ -1,20 +1,3 @@
-/**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- *
- * @author Liu Fei (@Magic_LF)
- */
-
-/*!
- * \file lj_force.h
- * \brief Lennard-Jones 力场融合算子 Kernel 实现
- */
-
 #ifndef LJ_FORCE_H
 #define LJ_FORCE_H
 
@@ -73,75 +56,85 @@ public:
             myEnd_ = 0;
         }
 
-        forceStride_ = LjAlignUp(atomsPerCore * 3, LJ_FLOAT_PER_BLOCK);
+        myAtoms_ = myEnd_ - myStart_;
 
         positions_gm_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(positions));
         forces_gm_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(forces));
         energy_gm_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(energy));
 
-        uint32_t posSize = LjAlignUp(numAtoms_ * 3 * sizeof(float), LJ_BLOCK_SIZE);
-        uint32_t forceSize = forceStride_ * sizeof(float);
+        uint32_t tileBufSize = LjAlignUp(tileSize_ * 3 * sizeof(float), LJ_BLOCK_SIZE);
+        uint32_t forceSize = LjAlignUp(myAtoms_ * 3 * sizeof(float), LJ_BLOCK_SIZE);
         if (forceSize < LJ_BLOCK_SIZE) forceSize = LJ_BLOCK_SIZE;
         uint32_t energySize = LjAlignUp(LJ_FLOAT_PER_BLOCK * sizeof(float), LJ_BLOCK_SIZE);
 
-        pipe_.InitBuffer(posQueue_, 1, posSize);
+        pipe_.InitBuffer(posQueue_, 1, tileBufSize);
         pipe_.InitBuffer(forceQueue_, 1, forceSize);
         pipe_.InitBuffer(energyQueue_, 1, energySize);
     }
 
     __aicore__ inline void Process() {
-        if (myStart_ >= myEnd_) return;
+        if (myAtoms_ <= 0) return;
 
-        int32_t posElements = LjAlignUp(numAtoms_ * 3, LJ_FLOAT_PER_BLOCK);
-
-        LocalTensor<float> posLocal = posQueue_.AllocTensor<float>();
-        DataCopy(posLocal, positions_gm_, posElements);
-        posQueue_.EnQue(posLocal);
-        LocalTensor<float> pos = posQueue_.DeQue<float>();
+        int32_t numTiles = (numAtoms_ + tileSize_ - 1) / tileSize_;
 
         LocalTensor<float> forceLocal = forceQueue_.AllocTensor<float>();
-        Duplicate(forceLocal, 0.0f, forceStride_);
+        Duplicate(forceLocal, 0.0f, myAtoms_ * 3);
 
         LocalTensor<float> energyLocal = energyQueue_.AllocTensor<float>();
         Duplicate(energyLocal, 0.0f, LJ_FLOAT_PER_BLOCK);
 
-        pipe_barrier(PIPE_ALL);
-
         float totalEnergy = 0.0f;
 
-        for (int32_t i = myStart_; i < myEnd_; i++) {
-            float xi = pos.GetValue(i * 3);
-            float yi = pos.GetValue(i * 3 + 1);
-            float zi = pos.GetValue(i * 3 + 2);
+        for (int32_t i = 0; i < myAtoms_; i++) {
+            int32_t atomI = myStart_ + i;
+
+            float xi = positions_gm_.GetValue(atomI * 3);
+            float yi = positions_gm_.GetValue(atomI * 3 + 1);
+            float zi = positions_gm_.GetValue(atomI * 3 + 2);
 
             float fx = 0.0f, fy = 0.0f, fz = 0.0f;
 
-            for (int32_t j = 0; j < numAtoms_; j++) {
-                if (j == i) continue;
+            for (int32_t t = 0; t < numTiles; t++) {
+                int32_t jStart = t * tileSize_;
+                int32_t jEnd = jStart + tileSize_;
+                if (jEnd > numAtoms_) jEnd = numAtoms_;
+                int32_t tileCount = jEnd - jStart;
 
-                float dx = xi - pos.GetValue(j * 3);
-                float dy = yi - pos.GetValue(j * 3 + 1);
-                float dz = zi - pos.GetValue(j * 3 + 2);
-                float r2 = dx * dx + dy * dy + dz * dz;
+                LocalTensor<float> tilePos = posQueue_.AllocTensor<float>();
+                DataCopy(tilePos, positions_gm_[jStart * 3], tileCount * 3);
+                posQueue_.EnQue(tilePos);
+                tilePos = posQueue_.DeQue<float>();
 
-                if (r2 < cutoffSq_ && r2 > 1e-10f) {
-                    float r2inv = 1.0f / r2;
-                    float r6inv = r2inv * r2inv * r2inv;
-                    float s6r6 = sigma6_ * r6inv;
-                    float s12r12 = s6r6 * s6r6;
+                for (int32_t j = jStart; j < jEnd; j++) {
+                    if (j == atomI) continue;
+                    int32_t jj = j - jStart;
 
-                    if (i < j) {
-                        totalEnergy += eps4_ * (s12r12 - s6r6);
+                    float dx = xi - tilePos.GetValue(jj * 3);
+                    float dy = yi - tilePos.GetValue(jj * 3 + 1);
+                    float dz = zi - tilePos.GetValue(jj * 3 + 2);
+                    float r2 = dx * dx + dy * dy + dz * dz;
+
+                    if (r2 < cutoffSq_ && r2 > 1e-10f) {
+                        float r2inv = 1.0f / r2;
+                        float r6inv = r2inv * r2inv * r2inv;
+                        float s6r6 = sigma6_ * r6inv;
+                        float s12r12 = s6r6 * s6r6;
+
+                        if (atomI < j) {
+                            totalEnergy += eps4_ * (s12r12 - s6r6);
+                        }
+
+                        float fscalar = eps24_ * r2inv * (2.0f * s12r12 - s6r6);
+                        fx += fscalar * dx;
+                        fy += fscalar * dy;
+                        fz += fscalar * dz;
                     }
-
-                    float fscalar = eps24_ * r2inv * (2.0f * s12r12 - s6r6);
-                    fx += fscalar * dx;
-                    fy += fscalar * dy;
-                    fz += fscalar * dz;
                 }
+
+                posQueue_.FreeTensor(tilePos);
             }
 
-            int32_t idx = (i - myStart_) * 3;
+            int32_t idx = i * 3;
             forceLocal.SetValue(idx, fx);
             forceLocal.SetValue(idx + 1, fy);
             forceLocal.SetValue(idx + 2, fz);
@@ -152,7 +145,7 @@ public:
 
         forceQueue_.EnQue(forceLocal);
         LocalTensor<float> forceOut = forceQueue_.DeQue<float>();
-        DataCopy(forces_gm_[coreIdx_ * forceStride_], forceOut, forceStride_);
+        DataCopy(forces_gm_[myStart_ * 3], forceOut, myAtoms_ * 3);
 
         energyQueue_.EnQue(energyLocal);
         LocalTensor<float> energyOut = energyQueue_.DeQue<float>();
@@ -160,7 +153,6 @@ public:
 
         pipe_barrier(PIPE_ALL);
 
-        posQueue_.FreeTensor(pos);
         forceQueue_.FreeTensor(forceOut);
         energyQueue_.FreeTensor(energyOut);
     }
@@ -181,7 +173,7 @@ private:
     int32_t coreIdx_;
     int32_t myStart_;
     int32_t myEnd_;
-    int32_t forceStride_;
+    int32_t myAtoms_;
     float cutoffSq_;
     float sigma6_;
     float sigma12_;
@@ -189,4 +181,4 @@ private:
     float eps24_;
 };
 
-#endif  // LJ_FORCE_H
+#endif

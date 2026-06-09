@@ -92,21 +92,14 @@ class LJForceNPU:
         N = positions.shape[0]
         positions_flat = np.ascontiguousarray(positions.flatten(), dtype=np.float32)
 
-        # 计算核数和对齐步长（与 Kernel 保持一致）
-        max_cores = 32
-        min_atoms_per_core = 16
-        optimal_cores = min((N + min_atoms_per_core - 1) // min_atoms_per_core, max_cores)
-        optimal_cores = max(optimal_cores, 1)
-        atoms_per_core = (N + optimal_cores - 1) // optimal_cores
+        # 力输出：连续布局（N*3）
+        force_size = N * 3 * 4
+        forces_out = np.zeros(N * 3, dtype=np.float32)
 
-        # 对齐步长
-        force_stride = ((atoms_per_core * 3 + 7) // 8) * 8
-        force_total_size = force_stride * optimal_cores
-        forces_aligned = np.zeros(force_total_size, dtype=np.float32)
-        energy_buf = np.zeros(8 * optimal_cores, dtype=np.float32)
+        max_cores = 32
+        energy_buf = np.zeros(8 * max_cores, dtype=np.float32)
 
         pos_size = positions_flat.nbytes
-        force_size = forces_aligned.nbytes
         energy_size = energy_buf.nbytes
         workspace_size = 256
 
@@ -116,8 +109,6 @@ class LJForceNPU:
         workspace_dev, _ = acl.rt.malloc(workspace_size, 0)
 
         acl.rt.memcpy(pos_dev, pos_size, positions_flat.ctypes.data, pos_size, 1)
-        acl.rt.memcpy(force_dev, force_size, forces_aligned.ctypes.data, force_size, 1)
-        acl.rt.memcpy(energy_dev, energy_size, energy_buf.ctypes.data, energy_size, 1)
 
         self.lib.aclnnLJForceDirect(
             ctypes.c_void_p(pos_dev),
@@ -134,7 +125,7 @@ class LJForceNPU:
 
         acl.rt.synchronize_stream(self.stream)
 
-        acl.rt.memcpy(forces_aligned.ctypes.data, force_size, force_dev, force_size, 2)
+        acl.rt.memcpy(forces_out.ctypes.data, force_size, force_dev, force_size, 2)
         acl.rt.memcpy(energy_buf.ctypes.data, energy_size, energy_dev, energy_size, 2)
 
         acl.rt.free(pos_dev)
@@ -142,22 +133,9 @@ class LJForceNPU:
         acl.rt.free(energy_dev)
         acl.rt.free(workspace_dev)
 
-        # 提取力数据
-        forces = np.zeros((N, 3), dtype=np.float32)
-        for core_idx in range(optimal_cores):
-            start_atom = core_idx * atoms_per_core
-            end_atom = min(start_atom + atoms_per_core, N)
-            if start_atom >= N:
-                break
-            src_offset = core_idx * force_stride
-            for local_idx in range(end_atom - start_atom):
-                atom_idx = start_atom + local_idx
-                forces[atom_idx, 0] = forces_aligned[src_offset + local_idx * 3]
-                forces[atom_idx, 1] = forces_aligned[src_offset + local_idx * 3 + 1]
-                forces[atom_idx, 2] = forces_aligned[src_offset + local_idx * 3 + 2]
+        forces = forces_out.reshape(N, 3).copy()
 
-        # 提取能量
-        energy = sum(energy_buf[core_idx * 8] for core_idx in range(optimal_cores))
+        energy = energy_buf.sum()
 
         return forces, energy
 
