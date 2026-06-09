@@ -1,0 +1,88 @@
+name: CI / Lint & PyTorch Test
+
+on:
+  push:
+    branches: [master, main, roadmap-hjx, 'release/**']
+    paths-ignore:
+      - '**/*.md'
+      - 'tutorial/**'
+      - 'FAQ.md'
+      - 'roadmap.md'
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  # ================================================================
+  # Job 1: 代码风格检查 (无需 CANN 环境)
+  # ================================================================
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install pre-commit
+        run: |
+          pip install pre-commit
+          pre-commit install
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files --show-diff-on-failure
+
+  # ================================================================
+  # Job 2: PyTorch 参考实现测试 (无需 CANN 环境)
+  # ================================================================
+  pytorch-tests:
+    name: PyTorch Ref Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install torch numpy matplotlib pytest
+
+      - name: TabNet Tests
+        run: |
+          python -X faulthandler -m pytest prediction/TabularData/test_tabnet.py -v --tb=short
+
+      - name: TimesNet Tests
+        run: |
+          python -X faulthandler -m pytest prediction/TimeSeries/test_timesnet.py -v --tb=short
+
+      - name: GPR Tests
+        run: |
+          python -X faulthandler -m pytest prediction/SmallData/test_gpr.py -v --tb=short
+
+  # ================================================================
+  # Job 3: DAO 基础算子库测试 (无需 CANN 环境)
+  # ================================================================
+  dao-tests:
+    name: DAO Ops Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install torch numpy ase
+
+      - name: Run DAO tests
+        run: |
+          python -X faulthandler -m pytest simulation/MaterialPropertyPrediction/DAO/test_ops.py -v --tb=short

@@ -1,0 +1,64 @@
+{
+    "name": "mat-chem-sim-pred / Ascend CANN Dev",
+
+    // 方式一: 使用本地 Dockerfile (推荐，可自定义)
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+
+    // 方式二: 直接使用 CANN 官方镜像 (如有 SWR 访问权限)
+    // "image": "swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64",
+
+    // 映射 NPU 设备 (仅在有 NPU 驱动的主机上生效)
+    "mounts": [
+        "source=/dev/davinci0,target=/dev/davinci0,type=bind",
+        "source=/dev/davinci_manager,target=/dev/davinci_manager,type=bind",
+        "source=/dev/hisi_hdc,target=/dev/hisi_hdc,type=bind",
+        "source=/usr/local/dcmi,target=/usr/local/dcmi,type=bind",
+        "source=/var/log/npu,target=/var/log/npu,type=bind"
+    ],
+
+    // 容器内环境变量
+    "containerEnv": {
+        "ASCEND_TOOLKIT_HOME": "/usr/local/Ascend/ascend-toolkit/latest",
+        "ASCEND_CANN_PACKAGE_PATH": "/usr/local/Ascend/ascend-toolkit/latest",
+        "LD_LIBRARY_PATH": "/usr/local/Ascend/ascend-toolkit/latest/lib64:/usr/local/Ascend/ascend-toolkit/latest/lib",
+        "SOC_VERSION": "Ascend910B1"
+    },
+
+    // VS Code 扩展
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // C/C++ 开发
+                "ms-vscode.cpptools",
+                "ms-vscode.cpptools-extension-pack",
+                "ms-vscode.cmake-tools",
+                // Python
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.pylint",
+                // Jupyter
+                "ms-toolsai.jupyter",
+                "ms-toolsai.jupyter-keymap",
+                // 其他
+                "yzhang.markdown-all-in-one",
+                "tamasfe.even-better-toml",
+                "mhutchie.git-graph"
+            ]
+        }
+    },
+
+    // 容器启动后自动执行
+    "postCreateCommand": "bash .devcontainer/setup.sh",
+
+    // 权限
+    "runArgs": ["--privileged"],
+
+    // 关闭后保留容器
+    "shutdownAction": "none",
+
+    // 远端用户
+    "remoteUser": "root"
+}

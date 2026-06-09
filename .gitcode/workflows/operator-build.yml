@@ -1,0 +1,176 @@
+name: CI / Ascend C Operator Build & Test
+
+on:
+  push:
+    branches: [master, main, roadmap-hjx]
+    paths:
+      - 'simulation/AI4MD/**'
+      - 'simulation/AI4PDE/**'
+      - '.gitcode/workflows/operator-build.yml'
+  pull_request:
+    branches: [master, main]
+    paths:
+      - 'simulation/AI4MD/**'
+      - 'simulation/AI4PDE/**'
+
+jobs:
+  # ================================================================
+  # Job 1: AI4MD 经典力场算子
+  # ================================================================
+  ai4md-lj:
+    name: AI4MD / LJ Force
+    runs-on: ascend-runner
+    container:
+      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+    env:
+      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build LJ
+        working-directory: simulation/AI4MD/Lennard_Jones
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
+          make -j$(nproc)
+
+      - name: Test LJ (C++ UT)
+        working-directory: simulation/AI4MD/Lennard_Jones/build
+        run: ctest --output-on-failure -j$(nproc)
+
+      - name: Test LJ (Python IT)
+        working-directory: simulation/AI4MD/Lennard_Jones
+        run: |
+          pip install pytest numpy torch
+          python -m pytest tests/ -v --tb=short
+
+  ai4md-dpd:
+    name: AI4MD / DPD
+    runs-on: ascend-runner
+    container:
+      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+    env:
+      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build DPD
+        working-directory: simulation/AI4MD/Dissipative_particle_dynamics
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
+          make -j$(nproc)
+
+      - name: Test DPD
+        working-directory: simulation/AI4MD/Dissipative_particle_dynamics/build
+        run: ctest --output-on-failure
+
+  ai4md-gaff2:
+    name: AI4MD / GAFF2
+    runs-on: ascend-runner
+    container:
+      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+    env:
+      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build GAFF2
+        working-directory: simulation/AI4MD/GAFF2
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
+          make -j$(nproc)
+
+  # ================================================================
+  # Job 2: AI4PDE 算子
+  # ================================================================
+  ai4pde-pinn:
+    name: AI4PDE / PINN
+    runs-on: ascend-runner
+    container:
+      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+    env:
+      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build PINN
+        working-directory: simulation/AI4PDE/pinn
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
+          make -j$(nproc)
+
+      - name: Test PINN
+        working-directory: simulation/AI4PDE/pinn/build
+        run: ctest --output-on-failure
+
+      - name: Test PINN (Python)
+        working-directory: simulation/AI4PDE/pinn
+        run: |
+          pip install pytest numpy torch
+          python -m pytest tests/ -v --tb=short
+
+  ai4pde-fno:
+    name: AI4PDE / FNO
+    runs-on: ascend-runner
+    container:
+      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+    env:
+      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build FNO
+        working-directory: simulation/AI4PDE/fno
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
+          make -j$(nproc)
+
+      - name: Test FNO
+        working-directory: simulation/AI4PDE/fno/build
+        run: ctest --output-on-failure
+
+  ai4pde-deeponet:
+    name: AI4PDE / DeepONet
+    runs-on: ascend-runner
+    container:
+      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+    env:
+      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build DeepONet
+        working-directory: simulation/AI4PDE/deeponet
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
+          make -j$(nproc)
+
+      - name: Test DeepONet
+        working-directory: simulation/AI4PDE/deeponet/build
+        run: ctest --output-on-failure
+
+  ai4pde-mgn:
+    name: AI4PDE / MeshGraphNet
+    runs-on: ascend-runner
+    container:
+      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+    env:
+      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build MeshGraphNet
+        working-directory: simulation/AI4PDE/mesh_graph_net
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
+          make -j$(nproc)
+
+      - name: Test MeshGraphNet
+        working-directory: simulation/AI4PDE/mesh_graph_net/build
+        run: ctest --output-on-failure
