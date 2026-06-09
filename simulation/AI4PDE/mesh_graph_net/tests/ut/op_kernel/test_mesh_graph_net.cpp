@@ -1,0 +1,97 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <cstdlib>
+#include "acl/acl.h"
+
+extern "C" int32_t aclnnMeshGraphNet(
+    void* nodeFeaturesAddr, void* edgeIndicesAddr,
+    void* edgeFeaturesAddr, void* nodeWeightsAddr,
+    void* edgeWeightsAddr, void* outputAddr,
+    int32_t numNodes, int32_t numEdges,
+    int32_t nodeDim, int32_t edgeDim,
+    int32_t hiddenDim, int32_t outputDim,
+    int32_t maxNeighbors,
+    void* workspaceAddr, uint64_t workspaceSize, void* stream);
+
+extern "C" uint64_t aclnnMeshGraphNetGetWorkspaceSize(
+    int32_t numNodes, int32_t numEdges,
+    int32_t nodeDim, int32_t edgeDim,
+    int32_t hiddenDim, int32_t outputDim);
+
+void TestSmallGraph() {
+    const int32_t numNodes = 5, numEdges = 6;
+    const int32_t nodeDim = 4, edgeDim = 2, hiddenDim = 8, outputDim = 2;
+    const int32_t maxNeighbors = 4;
+
+    std::vector<float> hNodeFeat(numNodes * nodeDim, 1.0f);
+    std::vector<int32_t> hEdgeIdx = {0, 1, 1, 2, 2, 3, 3, 4, 0, 4, 1, 3};
+    std::vector<float> hEdgeFeat(numEdges * edgeDim, 0.5f);
+
+    int32_t nwSize = (nodeDim * hiddenDim + hiddenDim) +
+                     (hiddenDim * hiddenDim + hiddenDim) +
+                     (hiddenDim * outputDim + outputDim);
+    int32_t ewSize = ((nodeDim + edgeDim) * hiddenDim + hiddenDim) +
+                     (hiddenDim * hiddenDim + hiddenDim);
+
+    std::vector<float> hNodeW(nwSize, 0.1f);
+    std::vector<float> hEdgeW(ewSize, 0.1f);
+    std::vector<float> hOutput(numNodes * outputDim, 0.0f);
+
+    aclInit(nullptr);
+    aclrtSetDevice(0);
+    aclrtStream stream;
+    aclrtCreateStream(&stream);
+
+    uint64_t wsSize = aclnnMeshGraphNetGetWorkspaceSize(
+        numNodes, numEdges, nodeDim, edgeDim, hiddenDim, outputDim);
+
+    void *dNF, *dEI, *dEF, *dNW, *dEW, *dOut, *dWS;
+    aclrtMalloc(&dNF, hNodeFeat.size() * sizeof(float), ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&dEI, hEdgeIdx.size() * sizeof(int32_t), ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&dEF, hEdgeFeat.size() * sizeof(float), ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&dNW, hNodeW.size() * sizeof(float), ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&dEW, hEdgeW.size() * sizeof(float), ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&dOut, hOutput.size() * sizeof(float), ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&dWS, wsSize, ACL_MEM_MALLOC_HUGE_FIRST);
+
+    aclrtMemcpyAsync(dNF, hNodeFeat.size() * sizeof(float), hNodeFeat.data(),
+                      hNodeFeat.size() * sizeof(float), ACL_MEMCPY_HOST_TO_DEVICE, stream);
+    aclrtMemcpyAsync(dEI, hEdgeIdx.size() * sizeof(int32_t), hEdgeIdx.data(),
+                      hEdgeIdx.size() * sizeof(int32_t), ACL_MEMCPY_HOST_TO_DEVICE, stream);
+    aclrtMemcpyAsync(dEF, hEdgeFeat.size() * sizeof(float), hEdgeFeat.data(),
+                      hEdgeFeat.size() * sizeof(float), ACL_MEMCPY_HOST_TO_DEVICE, stream);
+    aclrtMemcpyAsync(dNW, hNodeW.size() * sizeof(float), hNodeW.data(),
+                      hNodeW.size() * sizeof(float), ACL_MEMCPY_HOST_TO_DEVICE, stream);
+    aclrtMemcpyAsync(dEW, hEdgeW.size() * sizeof(float), hEdgeW.data(),
+                      hEdgeW.size() * sizeof(float), ACL_MEMCPY_HOST_TO_DEVICE, stream);
+
+    aclnnMeshGraphNet(dNF, dEI, dEF, dNW, dEW, dOut,
+                       numNodes, numEdges, nodeDim, edgeDim,
+                       hiddenDim, outputDim, maxNeighbors,
+                       dWS, wsSize, stream);
+    aclrtSynchronizeStream(stream);
+
+    aclrtMemcpy(hOutput.data(), hOutput.size() * sizeof(float),
+                 dOut, hOutput.size() * sizeof(float), ACL_MEMCPY_DEVICE_TO_HOST);
+
+    float maxVal = 0, minVal = 1e10;
+    for (auto v : hOutput) {
+        maxVal = std::max(maxVal, v);
+        minVal = std::min(minVal, v);
+    }
+
+    std::cout << "MeshGraphNet UT: output range [" << minVal << ", " << maxVal << "]" << std::endl;
+    std::cout << "PASSED" << std::endl;
+
+    aclrtFree(dNF); aclrtFree(dEI); aclrtFree(dEF);
+    aclrtFree(dNW); aclrtFree(dEW); aclrtFree(dOut); aclrtFree(dWS);
+    aclrtDestroyStream(stream);
+    aclrtResetDevice(0);
+    aclFinalize();
+}
+
+int main() {
+    TestSmallGraph();
+    return 0;
+}
