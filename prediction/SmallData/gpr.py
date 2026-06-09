@@ -84,6 +84,8 @@ class GaussianProcessRegressor(nn.Module):
             mu: (m,) — predictive mean
             std: (m,) — predictive std (if return_std=True)
         """
+        if not hasattr(self, 'train_x') or self.train_x is None:
+            raise RuntimeError("GP model has not been fitted. Call fit() before predict().")
         K_s = self.kernel(x, self.train_x)
         mu = K_s @ self._alpha
 
@@ -109,6 +111,11 @@ class GaussianProcessRegressor(nn.Module):
             lml: scalar — log marginal likelihood
         """
         if x is None:
+            if not hasattr(self, 'train_x') or self.train_x is None:
+                raise RuntimeError(
+                    "GP model has not been fitted. Call fit() first, "
+                    "or pass (x, y) explicitly to log_marginal_likelihood()."
+                )
             x, y = self.train_x, self.train_y
 
         n = x.shape[0]
@@ -155,8 +162,10 @@ class ExpectedImprovement(AcquisitionFunction):
                  y_best: float) -> torch.Tensor:
         sigma = sigma.clamp(min=1e-10)
         gamma = (mu - y_best) / sigma
-        phi = torch.exp(-0.5 * gamma ** 2) / torch.sqrt(2 * torch.tensor(torch.pi))
-        Phi = 0.5 * (1 + torch.erf(gamma / torch.sqrt(torch.tensor(2.0))))
+        sqrt2 = torch.tensor(1.4142135623730951, device=mu.device, dtype=mu.dtype)
+        sqrt2pi = torch.tensor(2.5066282746310002, device=mu.device, dtype=mu.dtype)
+        phi = torch.exp(-0.5 * gamma ** 2) / sqrt2pi
+        Phi = 0.5 * (1 + torch.erf(gamma / sqrt2))
         ei = (mu - y_best) * Phi + sigma * phi
         return ei.clamp(min=0.0)
 
@@ -187,7 +196,8 @@ class ProbabilityOfImprovement(AcquisitionFunction):
                  y_best: float) -> torch.Tensor:
         sigma = sigma.clamp(min=1e-10)
         gamma = (mu - y_best) / sigma
-        return 0.5 * (1 + torch.erf(gamma / torch.sqrt(torch.tensor(2.0))))
+        sqrt2 = torch.tensor(1.4142135623730951, device=mu.device, dtype=mu.dtype)
+        return 0.5 * (1 + torch.erf(gamma / sqrt2))
 
 
 # ============================================================================

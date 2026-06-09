@@ -16,6 +16,7 @@ from .gpr import (
     ExpectedImprovement,
     UpperConfidenceBound,
     ProbabilityOfImprovement,
+    BayesianOptimizer,
     gp_predict_np,
 )
 
@@ -175,8 +176,6 @@ def test_acquisition_functions():
 
 def test_bo_on_simple_function():
     """验证贝叶斯优化能找到简单函数的极值点."""
-    from .gpr import BayesianOptimizer
-
     np.random.seed(42)
     torch.manual_seed(42)
 

@@ -13,17 +13,21 @@ on:
       - 'simulation/AI4MD/**'
       - 'simulation/AI4PDE/**'
 
+# YAML anchor: 所有 Ascend C 编译/测试 Job 共享的 runner + 容器配置
+.ascend-job: &ascend-job
+  runs-on: ascend-runner
+  container:
+    image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+  env:
+    ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+
 jobs:
   # ================================================================
   # Job 1: AI4MD 经典力场算子
   # ================================================================
   ai4md-lj:
     name: AI4MD / LJ Force
-    runs-on: ascend-runner
-    container:
-      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-    env:
-      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    <<: *ascend-job
     steps:
       - uses: actions/checkout@v4
 
@@ -46,11 +50,7 @@ jobs:
 
   ai4md-dpd:
     name: AI4MD / DPD
-    runs-on: ascend-runner
-    container:
-      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-    env:
-      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    <<: *ascend-job
     steps:
       - uses: actions/checkout@v4
 
@@ -67,11 +67,7 @@ jobs:
 
   ai4md-gaff2:
     name: AI4MD / GAFF2
-    runs-on: ascend-runner
-    container:
-      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-    env:
-      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    <<: *ascend-job
     steps:
       - uses: actions/checkout@v4
 
@@ -87,11 +83,7 @@ jobs:
   # ================================================================
   ai4pde-pinn:
     name: AI4PDE / PINN
-    runs-on: ascend-runner
-    container:
-      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-    env:
-      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    <<: *ascend-job
     steps:
       - uses: actions/checkout@v4
 
@@ -114,11 +106,7 @@ jobs:
 
   ai4pde-fno:
     name: AI4PDE / FNO
-    runs-on: ascend-runner
-    container:
-      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-    env:
-      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    <<: *ascend-job
     steps:
       - uses: actions/checkout@v4
 
@@ -135,11 +123,7 @@ jobs:
 
   ai4pde-deeponet:
     name: AI4PDE / DeepONet
-    runs-on: ascend-runner
-    container:
-      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-    env:
-      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    <<: *ascend-job
     steps:
       - uses: actions/checkout@v4
 
@@ -156,11 +140,7 @@ jobs:
 
   ai4pde-mgn:
     name: AI4PDE / MeshGraphNet
-    runs-on: ascend-runner
-    container:
-      image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-    env:
-      ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    <<: *ascend-job
     steps:
       - uses: actions/checkout@v4
 
