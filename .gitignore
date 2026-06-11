@@ -2,3 +2,8 @@ Reference/
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+.Python
+*.py[cod]
+*$py.class
+PR-error/
