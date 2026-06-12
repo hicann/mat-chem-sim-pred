@@ -243,9 +243,9 @@ class BayesianOptimizer:
         y_train = torch.stack(self.y_observed) if self.y_observed else None
 
         if x_train is None:
-            x_cand = torch.rand(n_candidates, self.bounds.shape[0])
-            x_cand = x_cand * (self.bounds[:, 1] - self.bounds[:, 0]) + self.bounds[:, 0]
-            return x_cand[y_train.argmax() if y_train is not None else 0]
+            x_next = torch.rand(self.bounds.shape[0])
+            x_next = x_next * (self.bounds[:, 1] - self.bounds[:, 0]) + self.bounds[:, 0]
+            return x_next
 
         self.gp.fit(x_train, y_train)
         y_best = y_train.max().item()

@@ -2,8 +2,8 @@
 TimesNet 测试 — 验证 PyTorch 实现正确性。
 
 Usage:
-    pytest prediction/TimeSeries/test_timesnet.py -v
-    python -m prediction.TimeSeries.test_timesnet
+    pytest prediction/TimeSeries/transformer_architectures/timesnet/test_timesnet.py -v
+    python -m prediction.TimeSeries.transformer_architectures.timesnet.test_timesnet
 """
 
 import numpy as np

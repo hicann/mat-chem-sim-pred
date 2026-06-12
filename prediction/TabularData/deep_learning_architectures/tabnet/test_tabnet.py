@@ -2,8 +2,8 @@
 TabNet 测试 — 验证 PyTorch 实现正确性，与 NumPy 参考对比。
 
 Usage:
-    pytest prediction/TabularData/test_tabnet.py -v
-    python -m prediction.TabularData.test_tabnet
+    pytest prediction/TabularData/deep_learning_architectures/tabnet/test_tabnet.py -v
+    python -m prediction.TabularData.deep_learning_architectures.tabnet.test_tabnet
 """
 
 import numpy as np
