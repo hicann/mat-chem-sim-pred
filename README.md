@@ -26,13 +26,8 @@ mat-chem-sim-pred/
 │       ├── pinn/                            #   PINN 算子 ✅
 │       ├── fno/                             #   FNO 算子 ✅
 │       ├── deeponet/                        #   DeepONet 算子 ✅
-│       ├── mesh_graph_net/                  #   MeshGraphNet 算子 ✅
 │       └── pde_common/                      #   公共工具模块
 ├── prediction/                              # 预测优化方向
-│   ├── TabularData/                         # 表格类数据预测预训练模型
-│   │   └── tabnet.py                        #   TabNet 参考实现 🔧
-│   ├── TimeSeries/                          # 时序类数据预测预训练模型
-│   │   └── timesnet.py                      #   TimesNet 参考实现 🔧
 │   └── SmallData/                           # 小数据预测优化模型
 │       ├── kernels.py                       #   GP 核函数参考实现 🔧
 │       └── gpr.py                           #   GP 回归 + BO 参考实现 🔧
@@ -54,14 +49,12 @@ mat-chem-sim-pred/
 |--------|------|------|-------------------|
 | **材料性质预测与结构生成** | 🔧 PyTorch 参考 | 基于第一性原理数据构建材料性质快速预测与逆向生成能力 | 晶体图神经网络、材料描述符计算、晶体结构生成模型、相图预测等 |
 | **机器学习分子动力学** | ✅ Ascend C 就绪 | 以 ML 势替代经典力场，实现 DFT 精度下的大体系长时间 MD 模拟 | DeepMD/SchNet/MACE 推理算子、描述符在线计算、D3 色散校正等 |
-| **AI for PDE** | ✅ Ascend C 就绪 | 用 AI 方法加速或替代传统 PDE 求解器，覆盖流体/传热/结构力学 | PINN/FNO/DeepONet/ MeshGraphNet 推理算子等 |
+| **AI for PDE** | ✅ Ascend C 就绪 | 用 AI 方法加速或替代传统 PDE 求解器，覆盖流体/传热/结构力学 | PINN/FNO/DeepONet 推理算子等 |
 
 ### 预测优化
 
 | 子方向 | 状态 | 目标 | 关键算子/模型类型 |
 |--------|------|------|-------------------|
-| **表格类数据预训练模型** | 🔧 PyTorch 参考 | 针对化工配方/物性/操作条件表，构建通用预训练 + 微调框架 | TabTransformer、FT-Transformer、TabNet、Gradient Boosting 替代等 |
-| **时序类数据预训练模型** | 🔧 PyTorch 参考 | 面向 DCS 历史数据/传感器流/批次轨迹的时序建模 | TimesNet、PatchTST、TimesFM、Mamba/SSM 等 |
 | **小数据预测优化模型** | 🔧 PyTorch 参考 | 解决标记数据稀少的化工场景，聚焦小样本/主动学习/贝叶斯优化 | 高斯过程回归、贝叶斯神经网络、贝叶斯优化、度量学习等 |
 
 > ✅ Ascend C 就绪 = 已完成 Ascend C 算子开发，含完整测试 | 🔧 PyTorch 参考 = 提供 PyTorch 参考实现，可作为 Ascend C 迁移基础
