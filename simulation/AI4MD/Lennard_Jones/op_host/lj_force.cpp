@@ -8,11 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  *
  * @author Liu Fei (@Magic_LF)
- */
-
-/*!
- * \file lj_force.cpp
- * \brief LJForce Host 端实现 (Tiling 计算与 Kernel 启动)
+ * @optimized Tiled pair computation, contiguous GM output, dynamic core/tile sizing
  */
 
 #include "acl/acl.h"
@@ -23,6 +19,8 @@
 
 using namespace optiling;
 
+constexpr int32_t LJ_MAX_CORES = 32;
+
 inline uint32_t AlignUp32(uint32_t x, uint32_t align) {
     return ((x + align - 1) / align) * align;
 }
@@ -31,14 +29,26 @@ extern "C" void aclrtlaunch_lj_force_kernel(uint32_t blockDim, aclrtStream strea
                                              void* positions, void* forces, void* energy,
                                              void* tiling);
 
-void ComputeLJTiling(int32_t numAtoms, float epsilon, float sigma, float cutoff,
-                     LJForceTilingData& tiling, int32_t maxCores = 32) {
-    int32_t minAtomsPerCore = 16;
-    int32_t optimalCores = (numAtoms + minAtomsPerCore - 1) / minAtomsPerCore;
-    optimalCores = std::min(optimalCores, maxCores);
-    optimalCores = std::max(optimalCores, 1);
+static int32_t ComputeCoreCount(int32_t numAtoms) {
+    if (numAtoms <= 0) return 1;
+    int32_t cores = (numAtoms + 15) / 16;
+    cores = std::min(cores, LJ_MAX_CORES);
+    cores = std::max(cores, 1);
+    return cores;
+}
 
-    int32_t tileSize = (numAtoms + optimalCores - 1) / optimalCores;
+static int32_t ComputeTileSize(int32_t numAtoms, int32_t coreNum) {
+    int32_t atomsPerCore = (numAtoms + coreNum - 1) / coreNum;
+    int32_t tile = atomsPerCore;
+    if (tile > 512) tile = 512;
+    if (tile < 32) tile = 32;
+    return tile;
+}
+
+void ComputeLJTiling(int32_t numAtoms, float epsilon, float sigma, float cutoff,
+                     LJForceTilingData& tiling) {
+    int32_t optimalCores = ComputeCoreCount(numAtoms);
+    int32_t tileSize = ComputeTileSize(numAtoms, optimalCores);
 
     float sigma2 = sigma * sigma;
     float sigma6 = sigma2 * sigma2 * sigma2;

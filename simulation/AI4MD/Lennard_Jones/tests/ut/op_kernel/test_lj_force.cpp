@@ -1,20 +1,3 @@
-/**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- *
- * @author Liu Fei (@Magic_LF)
- */
-
-/*!
- * \file test_lj_force.cpp
- * \brief LJForce 算子完整测试 (精度 + 性能)
- */
-
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -42,7 +25,6 @@ extern "C" int32_t aclnnLJForceDirect(
 
 extern "C" uint64_t aclnnLJForceGetWorkspaceSize(int32_t numAtoms);
 
-// CPU 参考实现
 void ljForceCPU(const std::vector<float>& positions, int32_t numAtoms,
                 float epsilon, float sigma, float cutoff,
                 std::vector<float>& forces, float& energy) {
@@ -111,18 +93,9 @@ public:
                  std::vector<float>& forces, float& energy) {
         if (!initialized_ && !init()) return false;
 
-        // 计算核数和对齐
-        int32_t maxCores = 32, minAtomsPerCore = 16;
-        int32_t optimalCores = std::min((numAtoms + minAtomsPerCore - 1) / minAtomsPerCore, maxCores);
-        optimalCores = std::max(optimalCores, 1);
-        int32_t atomsPerCore = (numAtoms + optimalCores - 1) / optimalCores;
-        int32_t forceStride = ((atomsPerCore * 3 + 7) / 8) * 8;
-        int32_t forceTotalSize = forceStride * optimalCores;
-
-        // 分配内存
         size_t posSize = numAtoms * 3 * sizeof(float);
-        size_t forceSize = forceTotalSize * sizeof(float);
-        size_t energySize = 8 * optimalCores * sizeof(float);
+        size_t forceSize = numAtoms * 3 * sizeof(float);
+        size_t energySize = LJ_FLOAT_PER_BLOCK * LJ_MAX_CORES * sizeof(float);
         uint64_t workspaceSize = aclnnLJForceGetWorkspaceSize(numAtoms);
 
         void *posAddr, *forcesAddr, *energyAddr, *workspaceAddr;
@@ -131,44 +104,25 @@ public:
         aclrtMalloc(&energyAddr, energySize, ACL_MEM_MALLOC_HUGE_FIRST);
         aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
 
-        // 拷贝输入
         aclrtMemcpy(posAddr, posSize, positions.data(), posSize, ACL_MEMCPY_HOST_TO_DEVICE);
 
-        // 调用算子
         aclnnLJForceDirect(posAddr, forcesAddr, energyAddr, numAtoms,
                            epsilon, sigma, cutoff, workspaceAddr, workspaceSize, stream_);
         aclrtSynchronizeStream(stream_);
 
-        // 拷贝输出
-        std::vector<float> forcesAligned(forceTotalSize, 0.0f);
-        std::vector<float> energyBuf(8 * optimalCores, 0.0f);
-        aclrtMemcpy(forcesAligned.data(), forceSize, forcesAddr, forceSize, ACL_MEMCPY_DEVICE_TO_HOST);
+        forces.resize(numAtoms * 3);
+        std::vector<float> energyBuf(LJ_FLOAT_PER_BLOCK * LJ_MAX_CORES, 0.0f);
+        aclrtMemcpy(forces.data(), forceSize, forcesAddr, forceSize, ACL_MEMCPY_DEVICE_TO_HOST);
         aclrtMemcpy(energyBuf.data(), energySize, energyAddr, energySize, ACL_MEMCPY_DEVICE_TO_HOST);
 
-        // 释放内存
         aclrtFree(posAddr);
         aclrtFree(forcesAddr);
         aclrtFree(energyAddr);
         aclrtFree(workspaceAddr);
 
-        // 提取力数据
-        forces.assign(numAtoms * 3, 0.0f);
-        for (int32_t coreIdx = 0; coreIdx < optimalCores; coreIdx++) {
-            int32_t startAtom = coreIdx * atomsPerCore;
-            int32_t endAtom = std::min(startAtom + atomsPerCore, numAtoms);
-            int32_t srcOffset = coreIdx * forceStride;
-            for (int32_t localIdx = 0; localIdx < endAtom - startAtom; localIdx++) {
-                int32_t atomIdx = startAtom + localIdx;
-                forces[atomIdx * 3] = forcesAligned[srcOffset + localIdx * 3];
-                forces[atomIdx * 3 + 1] = forcesAligned[srcOffset + localIdx * 3 + 1];
-                forces[atomIdx * 3 + 2] = forcesAligned[srcOffset + localIdx * 3 + 2];
-            }
-        }
-
-        // 累加能量
         energy = 0.0f;
-        for (int32_t coreIdx = 0; coreIdx < optimalCores; coreIdx++) {
-            energy += energyBuf[coreIdx * 8];
+        for (int32_t coreIdx = 0; coreIdx < LJ_MAX_CORES; coreIdx++) {
+            energy += energyBuf[coreIdx * LJ_FLOAT_PER_BLOCK];
         }
 
         return true;
@@ -177,11 +131,12 @@ public:
     aclrtStream getStream() { return stream_; }
 
 private:
+    static constexpr int32_t LJ_FLOAT_PER_BLOCK = 8;
+    static constexpr int32_t LJ_MAX_CORES = 32;
     bool initialized_;
     aclrtStream stream_;
 };
 
-// 生成随机坐标
 void generatePositions(std::vector<float>& positions, int32_t numAtoms, float boxSize, uint32_t seed) {
     srand(seed);
     positions.resize(numAtoms * 3);
@@ -226,10 +181,10 @@ void testNPU(LJForceNPU& npu) {
 
     float sigma = 3.4f, epsilon = 0.01f, cutoff = 10.0f;
 
-    int testCases[] = {20, 50, 100};
-    const char* descs[] = {"小", "中", "大"};
+    int testCases[] = {20, 50, 100, 500, 2000};
+    const char* descs[] = {"小", "中", "大", "较大", "超大规模"};
 
-    for (int t = 0; t < 3; t++) {
+    for (int t = 0; t < 5; t++) {
         int N = testCases[t];
         LOG_PRINT("\n--- %s规模: %d 原子 ---\n", descs[t], N);
 
@@ -237,17 +192,14 @@ void testNPU(LJForceNPU& npu) {
         std::vector<float> positions;
         generatePositions(positions, N, boxSize, 42);
 
-        // CPU 参考
         std::vector<float> forcesCPU;
         float energyCPU;
         ljForceCPU(positions, N, epsilon, sigma, cutoff, forcesCPU, energyCPU);
 
-        // NPU
         std::vector<float> forcesNPU;
         float energyNPU;
         npu.compute(positions, N, epsilon, sigma, cutoff, forcesNPU, energyNPU);
 
-        // 比较
         float maxForceErr = 0.0f, maxForceCPU = 0.0f;
         for (int i = 0; i < N * 3; i++) {
             maxForceErr = std::max(maxForceErr, std::abs(forcesNPU[i] - forcesCPU[i]));
@@ -270,12 +222,12 @@ void benchmark(LJForceNPU& npu) {
     LOG_PRINT("============================================================\n");
 
     float sigma = 3.4f, epsilon = 0.01f, cutoff = 10.0f;
-    int testCases[] = {64, 128, 256};
+    int testCases[] = {64, 128, 256, 512, 2000};
 
     LOG_PRINT("\n%-8s %-10s %-12s %-12s %-10s\n", "N", "Pairs", "CPU(ms)", "NPU(ms)", "加速比");
     LOG_PRINT("----------------------------------------------------------------\n");
 
-    for (int t = 0; t < 3; t++) {
+    for (int t = 0; t < 5; t++) {
         int N = testCases[t];
         int pairs = N * (N - 1) / 2;
         float boxSize = std::max(15.0f, std::pow((float)N, 1.0f/3.0f) * 4.0f);
@@ -286,7 +238,6 @@ void benchmark(LJForceNPU& npu) {
         std::vector<float> forces;
         float energy;
 
-        // CPU 计时
         auto start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < 3; i++) {
             ljForceCPU(positions, N, epsilon, sigma, cutoff, forces, energy);
@@ -294,12 +245,10 @@ void benchmark(LJForceNPU& npu) {
         auto end = std::chrono::high_resolution_clock::now();
         double cpuMs = std::chrono::duration<double, std::milli>(end - start).count() / 3.0;
 
-        // NPU 预热
         for (int i = 0; i < 3; i++) {
             npu.compute(positions, N, epsilon, sigma, cutoff, forces, energy);
         }
 
-        // NPU 计时
         start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < 10; i++) {
             npu.compute(positions, N, epsilon, sigma, cutoff, forces, energy);

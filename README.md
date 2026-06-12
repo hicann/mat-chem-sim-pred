@@ -14,33 +14,50 @@
 mat-chem-sim-pred/
 ├── simulation/                              # 科学计算方向
 │   ├── MaterialPropertyPrediction/          # 材料性质预测与材料结构生成
+│   │   └── DAO/                             #   PyTorch 基础算子库
 │   ├── AI4MD/                               # 机器学习分子动力学
+│   │   ├── Lennard_Jones/                   #   LJ 力场算子 ✅
+│   │   ├── GAFF2/                           #   GAFF2 力场算子 ✅
+│   │   ├── PME/                             #   PME 静电算子 ✅
+│   │   ├── SHAKE/                           #   SHAKE 约束算子 ✅
+│   │   ├── velocity-verlet/                 #   Velocity Verlet 积分 ✅
+│   │   └── Dissipative_particle_dynamics/   #   DPD 耗散粒子动力学 ✅
 │   └── AI4PDE/                              # AI for PDE
+│       ├── pinn/                            #   PINN 算子 ✅
+│       ├── fno/                             #   FNO 算子 ✅
+│       ├── deeponet/                        #   DeepONet 算子 ✅
+│       └── pde_common/                      #   公共工具模块
 ├── prediction/                              # 预测优化方向
-│   ├── TabularData/                         # 表格类数据预测预训练模型
-│   ├── TimeSeries/                          # 时序类数据预测预训练模型
 │   └── SmallData/                           # 小数据预测优化模型
+│       ├── kernels.py                       #   GP 核函数参考实现 🔧
+│       └── gpr.py                           #   GP 回归 + BO 参考实现 🔧
 ├── template/                                # 算子贡献模板
-└── roadmap.md                               # 算子开发路线图
+│   ├── algorithm.md                         #   算法说明模板
+│   ├── references.md                        #   参考文献模板
+│   ├── operator_example.md                  #   算子代码框架模板
+│   └── test_architecture.md                 #   测试架构模板
+├── roadmap.md                               # 开发路线图
+├── FAQ.md                                   # 常见问题
+└── AGENTS.md                                # 开发辅助规则
 ```
 
 ## 重点关注领域
 
 ### 科学计算
 
-| 子方向 | 目标 | 关键算子/模型类型 |
-|--------|------|-------------------|
-| **材料性质预测与结构生成** | 基于第一性原理数据构建材料性质快速预测与逆向生成能力 | 晶体图神经网络、材料描述符计算、晶体结构生成模型、相图预测等 |
-| **机器学习分子动力学** | 以 ML 势替代经典力场，实现 DFT 精度下的大体系长时间 MD 模拟 | DeepMD/SchNet/MACE 推理算子、描述符在线计算、D3 色散校正等 |
-| **AI for PDE** | 用 AI 方法加速或替代传统 PDE 求解器，覆盖流体/传热/结构力学 | PINN/FNO/DeepONet/ MeshGraphNet 推理算子等 |
+| 子方向 | 状态 | 目标 | 关键算子/模型类型 |
+|--------|------|------|-------------------|
+| **材料性质预测与结构生成** | 🔧 PyTorch 参考 | 基于第一性原理数据构建材料性质快速预测与逆向生成能力 | 晶体图神经网络、材料描述符计算、晶体结构生成模型、相图预测等 |
+| **机器学习分子动力学** | ✅ Ascend C 就绪 | 以 ML 势替代经典力场，实现 DFT 精度下的大体系长时间 MD 模拟 | DeepMD/SchNet/MACE 推理算子、描述符在线计算、D3 色散校正等 |
+| **AI for PDE** | ✅ Ascend C 就绪 | 用 AI 方法加速或替代传统 PDE 求解器，覆盖流体/传热/结构力学 | PINN/FNO/DeepONet 推理算子等 |
 
 ### 预测优化
 
-| 子方向 | 目标 | 关键算子/模型类型 |
-|--------|------|-------------------|
-| **表格类数据预训练模型** | 针对化工配方/物性/操作条件表，构建通用预训练 + 微调框架 | TabTransformer、FT-Transformer、TabNet、Gradient Boosting 替代等 |
-| **时序类数据预训练模型** | 面向 DCS 历史数据/传感器流/批次轨迹的时序建模 | TimesNet、PatchTST、TimesFM、Mamba/SSM 等 |
-| **小数据预测优化模型** | 解决标记数据稀少的化工场景，聚焦小样本/主动学习/贝叶斯优化 | 高斯过程回归、贝叶斯神经网络、贝叶斯优化、度量学习等 |
+| 子方向 | 状态 | 目标 | 关键算子/模型类型 |
+|--------|------|------|-------------------|
+| **小数据预测优化模型** | 🔧 PyTorch 参考 | 解决标记数据稀少的化工场景，聚焦小样本/主动学习/贝叶斯优化 | 高斯过程回归、贝叶斯神经网络、贝叶斯优化、度量学习等 |
+
+> ✅ Ascend C 就绪 = 已完成 Ascend C 算子开发，含完整测试 | 🔧 PyTorch 参考 = 提供 PyTorch 参考实现，可作为 Ascend C 迁移基础
 
 > 详细算子规划请参见 [roadmap.md](roadmap.md)。
 
@@ -73,6 +90,50 @@ mat-chem-sim-pred/
 - 郑柳琪 2557692481@qq.com
 - 张强豪 1964035193@qq.com
 - 李姝漫 1404537011@qq.com
+
+## 参考资源
+
+为帮助开发者学习 Ascend C 算子开发，建议参考以下 CANN 官方仓库（可 clone 到本地 `Reference/` 目录，该目录不参与版本管理）：
+
+### 基础数学库
+
+| 仓库 | 说明 |
+|------|------|
+| [opbase](https://atomgit.com/cann/opbase) | Ascend C 算子开发基础库，提供通用宏、接口与工具 |
+| [ops-math](https://atomgit.com/cann/ops-math) | 数学运算算子库（Element-wise、Reduction 等） |
+| [ops-blas](https://atomgit.com/cann/ops-blas) | BLAS 线性代数算子库（MatMul、Gemm 等） |
+| [ops-fft](https://atomgit.com/cann/ops-fft) | 傅里叶变换算子库 |
+| [ops-sparse](https://atomgit.com/cann/ops-sparse) | 稀疏计算算子库 |
+| [ops-tensor](https://atomgit.com/cann/ops-tensor) | 张量操作算子库（Reshape、Slice、Concat 等） |
+| [ops-nn](https://atomgit.com/cann/ops-nn) | 神经网络算子库（Conv、Pool、Activation 等） |
+| [ops-rand](https://atomgit.com/cann/ops-rand) | 随机数生成算子库 |
+
+### 开发标准与调试工具
+
+| 仓库 | 说明 |
+|------|------|
+| [cann-learning-hub](https://atomgit.com/cann/cann-learning-hub) | CANN 学习中心，含教程、示例与最佳实践 |
+| [oam-tools](https://atomgit.com/cann/oam-tools) | 算子开发调试与性能分析工具集 |
+| [ops-test-kit](https://atomgit.com/cann/ops-test-kit) | 算子测试套件，用例生成与结果分析 |
+| [pypto](https://atomgit.com/cann/pypto) | PyTorch 算子自动迁移工具（PyTorch → Ascend C） |
+
+### AI Kernel 生成参考
+
+| 仓库 | 说明 |
+|------|------|
+| [cann-bench](https://atomgit.com/cann/cann-bench) | CANN 性能基准测试与 Benchmark |
+| [cannbot-skills](https://atomgit.com/cann/cannbot-skills) | CANN 开发辅助 Skills 与自动化工具 |
+| [cann-samples](https://atomgit.com/cann/cann-samples) | Ascend C 算子开发完整示例集 |
+
+### 相关参考库
+
+| 仓库 | 说明 |
+|------|------|
+| [cann-ops-competitions](https://atomgit.com/cann/cann-ops-competitions) | CANN 算子竞赛参赛作品集 |
+| [asnumpy](https://atomgit.com/cann/asnumpy) | NumPy 兼容 API，方便从 NumPy 迁移到 Ascend |
+| [ascend-boost-comm](https://atomgit.com/cann/ascend-boost-comm) | Ascend Boost 通信库 |
+
+> 可通过 `git clone` 将上述仓库下载至本地 `Reference/` 目录作为学习参考。该目录已加入 `.gitignore`，不会纳入本仓库版本管理。
 
 ## 快速上手
 
