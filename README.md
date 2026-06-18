@@ -28,9 +28,11 @@ mat-chem-sim-pred/
 │       ├── deeponet/                        #   DeepONet 算子 ✅
 │       └── pde_common/                      #   公共工具模块
 ├── prediction/                              # 预测优化方向
-│   └── SmallData/                           # 小数据预测优化模型
-│       ├── kernels.py                       #   GP 核函数参考实现 🔧
-│       └── gpr.py                           #   GP 回归 + BO 参考实现 🔧
+│   ├── SmallData/                           # 小数据预测优化模型
+│   │   ├── kernels.py                       #   GP 核函数参考实现 🔧
+│   │   └── gpr.py                           #   GP 回归 + BO 参考实现 🔧
+│   └── ProcessControl/                      # 工业过程控制与 PID 整定算子
+│       └── PIDModelFit/                     #   FOPDT/IPDT/SOPDT 模型辨识算子 ✅
 ├── template/                                # 算子贡献模板
 │   ├── algorithm.md                         #   算法说明模板
 │   ├── references.md                        #   参考文献模板
@@ -56,6 +58,7 @@ mat-chem-sim-pred/
 | 子方向 | 状态 | 目标 | 关键算子/模型类型 |
 |--------|------|------|-------------------|
 | **小数据预测优化模型** | 🔧 PyTorch 参考 | 解决标记数据稀少的化工场景，聚焦小样本/主动学习/贝叶斯优化 | 高斯过程回归、贝叶斯神经网络、贝叶斯优化、度量学习等 |
+| **工业过程控制模型辨识** | ✅ Ascend C 就绪 | 面向 PID 整定、自整定与数字孪生场景，加速多回路、多候选过程模型辨识 | FOPDT、IPDT、SOPDT basis-GEMM fit 算子 |
 
 > ✅ Ascend C 就绪 = 已完成 Ascend C 算子开发，含完整测试 | 🔧 PyTorch 参考 = 提供 PyTorch 参考实现，可作为 Ascend C 迁移基础
 
