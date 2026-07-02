@@ -40,7 +40,8 @@ prediction/ProcessControl/
     ├── README.md
     ├── docs/
     │   ├── design.md
-    │   └── test_report.md
+    │   ├── test_report.md
+    │   └── matrixized_tuning_experiment.md
     ├── common/
     │   ├── pid_basis_gemm_fit_common.h
     │   ├── pid_basis_gemm_fit_host_impl.h
@@ -106,16 +107,21 @@ PASSED
 
 ### 4. 性能验证记录
 
-Ascend 910B1 原型验证中，典型规模下 NPU cached 端到端路径相对 CPU 多线程完整 fit 有明显优势：
+Ascend 910B1 原型验证中，典型规模下 NPU `MatMul + reduce` pipeline 相对 CPU 64 线程完整 fit 有明显优势。NPU pipeline 中 `dot[B, M]` 由 `aclnnMatmul` 在 Device 上生成，并直接进入自定义 reduce 算子，不回传 Host。
 
-| 模型 | 配置 | CPU 多线程完整 fit | NPU cached 端到端 | NPU cold 端到端 |
-|------|------|--------------------|-------------------|-----------------|
-| FOPDT | `B=64,N=1024,M=256` | `9.22 ms` | `0.43 ms` | `0.87 ms` |
-| IPDT | `B=64,N=1024,M=256` | `9.64 ms` | `0.40 ms` | `0.63 ms` |
-| SOPDT | `B=64,N=1024,M=256` | `8.46 ms` | `0.57 ms` | `0.87 ms` |
-| FOPDT | `B=128,N=1024,M=512` | `31.55 ms` | `0.99 ms` | `1.02 ms` |
-| IPDT | `B=128,N=1024,M=512` | `32.63 ms` | `0.64 ms` | `1.30 ms` |
-| SOPDT | `B=128,N=1024,M=512` | `33.40 ms` | `0.87 ms` | `1.19 ms` |
+| 模型 | 配置 | CPU 64T 完整 fit | NPU resident e2e | NPU cold e2e | resident 加速比 | cold 加速比 | 精度 |
+|------|------|-------------------|------------------|--------------|----------------|------------|------|
+| FOPDT | `B=64,N=1024,M=256` | `8.74037 ms` | `0.303587 ms` | `0.989354 ms` | `28.79x` | `8.83x` | `idx_diff=0` |
+| IPDT | `B=64,N=1024,M=256` | `8.85539 ms` | `0.185910 ms` | `0.389072 ms` | `47.63x` | `22.76x` | `idx_diff=0` |
+| SOPDT | `B=64,N=1024,M=256` | `10.3824 ms` | `0.166816 ms` | `0.406088 ms` | `62.24x` | `25.57x` | `idx_diff=0` |
+
+FOPDT 扩展规模：
+
+| 配置 | CPU 64T 完整 fit | NPU resident e2e | NPU cold e2e | resident 加速比 | cold 加速比 |
+|------|-------------------|------------------|--------------|----------------|------------|
+| `B=128,N=1024,M=512` | `28.6413 ms` | `0.308415 ms` | `1.52882 ms` | `92.87x` | `18.73x` |
+| `B=256,N=1024,M=512` | `55.6340 ms` | `0.306237 ms` | `1.06366 ms` | `181.67x` | `52.30x` |
+| `B=128,N=2048,M=512` | `61.8390 ms` | `0.371604 ms` | `1.00696 ms` | `166.41x` | `61.41x` |
 
 详细测试说明见 `prediction/ProcessControl/PIDModelFit/docs/test_report.md`。
 

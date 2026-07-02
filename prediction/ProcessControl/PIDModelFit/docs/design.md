@@ -1,74 +1,75 @@
-# PID 模型辨识算子组设计文档
+# PID 整定算子组设计文档
 
-## 背景
+## 目标
 
-工业 PID 整定通常先用阶跃响应或运行数据辨识低阶过程模型，再基于模型参数计算 PID 控制器参数。常见模型包括：
+`PIDModelFit` 面向工业过程控制中的批量 PID 整定链路。当前正式提交 12 个 Ascend C 算子，目标不是把某一个小公式搬到 NPU 上，而是让“模型辨识、模型诊断、PID 候选生成、候选闭环仿真、性能/能力评估”可以在 device 侧串成流水线，减少中间轨迹和中间统计量在 Host 与 Device 之间反复搬移。
 
-- FOPDT：一阶惯性加纯滞后，适合多数自衡对象。
-- IPDT：积分加纯滞后，适合液位、库存等积分对象。
-- SOPDT：二阶惯性加纯滞后，适合存在两个主导时间常数的对象。
+整体流程如下：
 
-传统 CPU 实现通常逐回路、逐候选参数循环打分。当回路数 `B`、采样点数 `N`、候选数 `M` 同时变大时，核心计算可整理为 `B x N` 与 `N x M` 的矩阵乘，再融合 best-candidate reduce，非常适合 NPU 执行。
+```text
+pv/sv/mv 采集数据
+  -> FOPDT/IPDT/SOPDT 模型辨识
+  -> 残差诊断与窗口化残差诊断
+  -> PID 规则整定生成候选
+  -> 候选闭环 rollout 仿真、评分、选优
+  -> 控制性能与过程能力评估
+```
 
-## 工程拆分
+## 算子分组
 
-本交付采用三独立算子结构：
-
-| 算子 | 目录 | 业务含义 |
+| 阶段 | 算子 | 设计定位 |
 |------|------|----------|
-| `PidFopdtBasisGemmFit` | `pid_fopdt_basis_gemm_fit` | FOPDT 候选模型辨识 |
-| `PidIpdtBasisGemmFit` | `pid_ipdt_basis_gemm_fit` | IPDT 候选模型辨识 |
-| `PidSopdtBasisGemmFit` | `pid_sopdt_basis_gemm_fit` | SOPDT 候选模型辨识 |
+| 模型辨识 | `pid_fopdt_basis_gemm_fit` | FOPDT 候选模型的 basis-GEMM 最小二乘辨识 |
+| 模型辨识 | `pid_ipdt_basis_gemm_fit` | IPDT 候选模型的 basis-GEMM 最小二乘辨识 |
+| 模型辨识 | `pid_sopdt_basis_gemm_fit` | SOPDT 候选模型的 basis-GEMM 最小二乘辨识 |
+| 模型诊断 | `pid_residual_diagnostics` | 全序列残差指标、自相关和白噪声诊断 |
+| 模型诊断 | `pid_windowed_residual_diagnostics` | 滑窗残差诊断，发现局部漂移、局部振荡和分段失配 |
+| PID 参数生成 | `pid_tuning_rule_batch` | 根据模型参数批量生成 Ziegler-Nichols、IMC、Cohen-Coon 三类候选 PID |
+| 候选仿真 | `pid_fopdt_batch_rollout_score` | 在 FOPDT 模型上批量仿真候选 PID，融合评分和 best 选择 |
+| 候选仿真 | `pid_ipdt_batch_rollout_score` | 在 IPDT 模型上批量仿真候选 PID，融合评分和 best 选择 |
+| 候选仿真 | `pid_sopdt_batch_rollout_score` | 在 SOPDT 模型上批量仿真候选 PID，融合评分和 best 选择 |
+| 候选特征 | `pid_step_response_features` | 将候选阶跃响应轨迹压缩为 rise/settling/overshoot/IAE/ISE 等特征 |
+| 控制性能 | `pid_control_performance_metrics` | 对 `pv/sp/mv` 批量计算 Harris、IAE、ISE、超调、稳定时间等 20 个指标 |
+| 过程能力 | `pid_process_capability_metrics` | 对运行窗口批量计算均值、标准差、Cp、Cpk、Pp、Ppk 和越限比例 |
 
-公共目录 `common/` 仅复用数值等价的 reduce 底座：
+每个 `pid_*` 目录都是独立算子工程，包含独立 `CMakeLists.txt`、`op_host/`、`op_kernel/`、`tests/`、`examples/`、README 和算子内文档。公共 Python reference、共享校验函数和复用头文件放在 `common/`。
+
+## 模型辨识设计
+
+FOPDT、IPDT、SOPDT 三个模型辨识算子采用相同的矩阵化路线。对每个候选模型参数，先根据 `mv` 输入轨迹预生成单位增益响应基函数 `basis[n,m]`；对每条回路的实测输出做中心化得到 `y_centered[b,n]`。核心计算为：
 
 ```text
-dot[B, M], basis_norm[M], y_energy[B]
-    -> best_sse[B], best_k[B], best_idx[B]
+dot[B, M] = y_centered[B, N] x basis_t[N, M]
+basis_norm[m] = sum_n basis[n,m]^2
+y_energy[b] = sum_n y_centered[b,n]^2
+K_hat[b,m] = dot[b,m] / basis_norm[m]
+SSE[b,m] = y_energy[b] - dot[b,m]^2 / basis_norm[m]
+best_idx[b] = argmin_m SSE[b,m]
 ```
 
-三个算子拥有独立 CMake、独立 host/kernel 入口、独立测试和独立文档，便于单独评审、发布和后续优化。
+`dot[B,M]` 由 CANN 内置 MatMul 完成，自定义算子负责 `K_hat/SSE/best_idx` 的融合 reduce。这样既能利用 NPU cube 做大矩阵乘，也避免把完整 `SSE[B,M]` 写回 Host；后续只需要每条回路的 `best_sse`、`best_k` 和 `best_idx`。
 
-## 数学形式
+## 下游整定设计
 
-给定单位增益候选响应 `g_m(t_i)` 和中心化测量输出 `y_b(t_i)`：
+模型辨识输出的是过程模型参数，不是 PID 参数本身。下游分三步：
 
-```text
-dot[b, m] = sum_i y_b(t_i) * g_m(t_i)
-basis_norm[m] = sum_i g_m(t_i)^2
-y_energy[b] = sum_i y_b(t_i)^2
-K_hat[b, m] = dot[b, m] / basis_norm[m]
-SSE[b, m] = y_energy[b] - dot[b, m]^2 / basis_norm[m]
-best_idx[b] = argmin_m SSE[b, m]
-```
+1. `pid_tuning_rule_batch` 根据 FOPDT 参数批量生成规则整定候选，输出 `pid_params[B,3,3]`，第二维对应 Ziegler-Nichols、IMC、Cohen-Coon。
+2. `pid_*_batch_rollout_score` 接收过程模型参数和一组候选 `kp/ki/kd`，在候选维度做批量闭环递推，融合候选特征、质量评分和最优候选选择，输出每条回路的 `best_result[B,8]` 和 `best_idx[B]`。
+3. `pid_step_response_features`、`pid_control_performance_metrics`、`pid_process_capability_metrics` 用于需要保留轨迹解释、上线验收或运行巡检的场景。
 
-其中 `dot` 由 CANN 内置 MatMul 完成，自定义算子完成 `K_hat/SSE/best_idx` 融合 reduce。
+三类 rollout 算子的区别来自过程模型递推方程：FOPDT 是一阶惯性加滞后，IPDT 是积分加滞后，SOPDT 是二阶惯性加滞后；PID 控制律、候选评分和 best 选择语义保持一致。
 
-## NPU 价值
+## 诊断与评估设计
 
-- 多回路、多候选天然形成 GEMM，大规模时可复用 NPU 矩阵计算能力。
-- reduce 算子避免把完整 `SSE[B, M]` 写回 Host，只输出每条回路最优结果。
-- 基函数矩阵可按工况缓存，在线场景只需上传新的 `y_centered/y_energy`。
-- SOPDT 候选维度更高，NPU 路线的收益最明显。
+残差诊断回答“辨识出的模型是否足够可信”。如果残差均值偏离 0，说明模型存在系统性偏差；如果残差自相关和 Ljung-Box 统计量偏大，说明残差不是白噪声，模型仍未解释掉某些动态结构。窗口化版本进一步按时间窗口检查局部失配，适合发现漂移、局部振荡或工况切换。
 
-## 已验证性能
+控制性能指标回答“控制器跟踪设定值的效果如何”，关注 `pv-sp` 误差、超调、稳定时间、IAE/ISE 等。过程能力指标回答“控制后的过程是否满足规格上下限”，关注 `Cp/Cpk/Pp/Ppk`、越限比例和均值偏移。两者关注点不同，因此作为两个独立算子保留。
 
-Ascend 910B1 原型验证结果：
+## NPU 工程定位
 
-| 模型 | 配置 | CPU 多线程完整 fit | NPU cached 端到端 | NPU cold 端到端 |
-|------|------|--------------------|-------------------|-----------------|
-| FOPDT | `B=64,N=1024,M=256` | `9.22 ms` | `0.43 ms` | `0.87 ms` |
-| IPDT | `B=64,N=1024,M=256` | `9.64 ms` | `0.40 ms` | `0.63 ms` |
-| SOPDT | `B=64,N=1024,M=256` | `8.46 ms` | `0.57 ms` | `0.87 ms` |
-| FOPDT | `B=128,N=1024,M=512` | `31.55 ms` | `0.99 ms` | `1.02 ms` |
-| IPDT | `B=128,N=1024,M=512` | `32.63 ms` | `0.64 ms` | `1.30 ms` |
-| SOPDT | `B=128,N=1024,M=512` | `33.40 ms` | `0.87 ms` | `1.19 ms` |
+- 模型辨识是明确的 NPU 主线：多回路、多候选天然形成 `B x N` 与 `N x M` 的 GEMM，resident 与 cold 口径下均显著快于 CPU 64 线程完整 fit。
+- rollout 是候选整定阶段的主要热点：虽然时间递推在采样步上串行，但候选维度可用宽 SIMD 并行，FOPDT/IPDT/SOPDT 三个 rollout 算子在典型候选规模下相对 CPU 64 线程有约 4x 到 7x 的 kernel 加速。
+- 残差、窗口残差、候选特征和指标类算子适合作为 device-resident 后处理；当上游数据已经在 NPU 上时，可避免把整条轨迹搬回 CPU。
+- `pid_tuning_rule_batch` 算术强度较低，不作为单独性能卖点；它保留的原因是端到端链路需要一个 device 侧“模型参数 -> PID 候选”的规则整定阶段。
 
-精度验证中 `best_sse_mismatch_count=0`，`max_reduce_sse_err` 和 `max_reduce_k_err` 均满足阈值。
-
-## 后续优化方向
-
-- 将 reduce 内层候选扫描改为 UB 分块向量化，降低逐点 GM 读取。
-- 支持 `basis_norm` 与候选元数据常驻 Device，进一步降低在线冷启动成本。
-- 将 MatMul 与 reduce 纳入图执行，减少 Host 调度开销。
-- 为 SOPDT 提供更大规模候选网格 benchmark，突出二阶模型的 NPU 优势。
+详细性能数据以各算子目录下的 `docs/benchmark.md` 为准。

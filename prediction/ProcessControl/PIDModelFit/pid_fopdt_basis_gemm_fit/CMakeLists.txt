@@ -104,5 +104,49 @@ target_link_libraries(test_aclnn_pid_fopdt_basis_gemm_fit
     pid_fopdt_basis_gemm_fit_host
 )
 
+add_executable(benchmark_pid_fopdt_basis_gemm_fit
+    tests/benchmark_pid_fopdt_basis_gemm_fit_aclnn.cpp
+)
+
+target_include_directories(benchmark_pid_fopdt_basis_gemm_fit PRIVATE
+    ${ASCEND_CANN_PACKAGE_PATH}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/op_host
+    ${CMAKE_CURRENT_SOURCE_DIR}/../common
+)
+
+target_link_directories(benchmark_pid_fopdt_basis_gemm_fit PRIVATE
+    ${ASCEND_CANN_PACKAGE_PATH}/lib64
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}/lib
+)
+
+target_link_libraries(benchmark_pid_fopdt_basis_gemm_fit
+    ascendcl
+    pid_fopdt_basis_gemm_fit_host
+)
+
+add_executable(benchmark_pid_fopdt_basis_gemm_pipeline
+    tests/benchmark_pid_fopdt_basis_gemm_pipeline_aclnn.cpp
+)
+
+target_include_directories(benchmark_pid_fopdt_basis_gemm_pipeline PRIVATE
+    ${ASCEND_CANN_PACKAGE_PATH}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/op_host
+    ${CMAKE_CURRENT_SOURCE_DIR}/../common
+)
+
+target_link_directories(benchmark_pid_fopdt_basis_gemm_pipeline PRIVATE
+    ${ASCEND_CANN_PACKAGE_PATH}/lib64
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}/lib
+)
+
+target_link_libraries(benchmark_pid_fopdt_basis_gemm_pipeline
+    ascendcl
+    opapi
+    nnopbase
+    pid_fopdt_basis_gemm_fit_host
+)
+
 install(TARGETS pid_fopdt_basis_gemm_fit_host LIBRARY DESTINATION lib)
 install(FILES op_host/pid_fopdt_basis_gemm_fit_host.h DESTINATION include)
