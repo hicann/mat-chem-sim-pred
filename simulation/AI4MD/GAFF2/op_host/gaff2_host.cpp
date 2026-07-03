@@ -235,13 +235,20 @@ int32_t GAFF2Host::Initialize(
 
     // Allocate exclusion mask buffer (N×N int32_t)
     if (n_atoms > 0) {
-        int32_t excl_sz = n_atoms * n_atoms * sizeof(int32_t);
-        CHECK_ACL(aclrtMalloc(&exclusion_, excl_sz, ACL_MEM_MALLOC_HUGE_FIRST), "Malloc exclusion");
+        // CWE-190 fix: n_atoms*n_atoms*sizeof(int32_t) overflows int32_t when
+        // n_atoms > ~23170. Compute the size in 64-bit arithmetic and validate.
+        int64_t excl_sz = static_cast<int64_t>(n_atoms) * n_atoms * sizeof(int32_t);
+        if (excl_sz <= 0) {
+            fprintf(stderr, "[GAFF2] Invalid exclusion buffer size (n_atoms=%d)\n", n_atoms);
+            Finalize();
+            return -1;
+        }
+        CHECK_ACL(aclrtMalloc(&exclusion_, (size_t)excl_sz, ACL_MEM_MALLOC_HUGE_FIRST), "Malloc exclusion");
         // Initialize to zeros (all pairs = normal, no exclusion)
         // This ensures that if UploadExclusion is not called, the kernel sees valid data
-        float zero = 0.0f;
-        aclrtMemset(exclusion_, excl_sz, 0, excl_sz);
-        fprintf(stdout, "[GAFF2] exclusion_ buffer allocated: %d bytes at %p\n", excl_sz, exclusion_);
+        aclrtMemset(exclusion_, (size_t)excl_sz, 0, (size_t)excl_sz);
+        fprintf(stdout, "[GAFF2] exclusion_ buffer allocated: %lld bytes at %p\n",
+                (long long)excl_sz, exclusion_);
     }
 
     // Setup GM structure

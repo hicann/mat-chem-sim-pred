@@ -65,7 +65,18 @@ bool load_particle_data(ParticleData& data, const std::string& filename) {
 
 // 数据生成函数
 ParticleData create_cubic_lattice(int32_t particles_per_side, float spacing) {
-    int32_t num_particles = particles_per_side * particles_per_side * particles_per_side;
+    // CWE-190 fix: particles_per_side^3 overflows int32_t when
+    // particles_per_side > ~1290 (1291^3 ≈ 2.16e9 > INT32_MAX). Compute the
+    // total in 64-bit and validate before using it to size the particle array.
+    if (particles_per_side <= 0) {
+        return ParticleData(0);
+    }
+    int64_t total = static_cast<int64_t>(particles_per_side) *
+                    particles_per_side * particles_per_side;
+    if (total > INT32_MAX) {
+        return ParticleData(0);  // lattice too large for int32 indexing
+    }
+    int32_t num_particles = static_cast<int32_t>(total);
     ParticleData data(num_particles);
     
     int idx = 0;

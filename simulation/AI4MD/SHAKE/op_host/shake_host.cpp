@@ -310,16 +310,25 @@ int32_t ShakeHost::LaunchIteration() {
 // ============================================================
 int32_t ShakeHost::AllocateDeviceMemory() {
     aclError ret;
+    // CWE-190 fix: cast n_atoms_ to size_t before multiplying so the byte count
+    // is computed in 64-bit arithmetic. n_atoms_*3*sizeof(float) overflows int32_t
+    // when n_atoms_ > ~715M, which would pass a (truncated) small size to
+    // MallocDevice and later overflow the buffer on the device.
+    if (n_atoms_ <= 0) {
+        fprintf(stderr, "[ShakeHost] AllocateDeviceMemory: invalid n_atoms_=%d\n", n_atoms_);
+        return -1;
+    }
     // Coordinates + max_error scalar (extra float at end for scalar write-back)
-    ret = MallocDevice((void**)&coords_device_, (n_atoms_ * 3 + 1) * sizeof(float));
+    ret = MallocDevice((void**)&coords_device_,
+                       (static_cast<size_t>(n_atoms_) * 3 + 1) * sizeof(float));
     if (ret != ACL_SUCCESS) return ret;
     device_owns_coords_ = true;
 
     // Place max_error at coords buffer end to avoid cache coherence issues
     // with separate aclrtMalloc allocations on Ascend 910B3.
-    max_error_device_ = coords_device_ + n_atoms_ * 3;
+    max_error_device_ = coords_device_ + static_cast<size_t>(n_atoms_) * 3;
 
-    ret = MallocDevice((void**)&inv_masses_device_, n_atoms_ * sizeof(float));
+    ret = MallocDevice((void**)&inv_masses_device_, static_cast<size_t>(n_atoms_) * sizeof(float));
     if (ret != ACL_SUCCESS) return ret;
 
     constraints_device_ = nullptr;

@@ -91,17 +91,36 @@ int32_t PMEHost::Initialize(
     config_.coulomb_c     = PME_COULOMB_C;
     config_.pad           = 0;
 
-    // Size calculation
-    int32_t mesh_size   = mesh_dim * mesh_dim * mesh_dim * sizeof(float);
-    int32_t dft_size    = mesh_dim * mesh_dim * 2 * sizeof(float);  // real + imag
-    int32_t pot_sz      = 3 * sizeof(float);
+    // Size calculation — use 64-bit arithmetic to avoid integer overflow (CWE-190):
+    // mesh_dim^3 * sizeof(float) overflows int32_t when mesh_dim > ~2150.
+    if (n_atoms <= 0 || mesh_dim <= 0 || mesh_dim > 65535) {
+        fprintf(stderr, "[PME] Invalid params: n_atoms=%d, mesh_dim=%d\n", n_atoms, mesh_dim);
+        return -1;
+    }
+    int64_t mesh_size   = static_cast<int64_t>(mesh_dim) * mesh_dim * mesh_dim * sizeof(float);
+    int64_t dft_size    = static_cast<int64_t>(mesh_dim) * mesh_dim * 2 * sizeof(float);  // real + imag
+    int64_t pot_sz      = 3 * sizeof(float);
 
     // Host buffers
-    pot_host_       = (float*)malloc(pot_sz);
-    host_coords_    = (float*)malloc(n_atoms * 3 * sizeof(float));
-    host_charges_   = (float*)malloc(n_atoms * sizeof(float));
-    host_dft_matrix_ = (float*)malloc(dft_size);
-    host_influence_  = (float*)malloc(mesh_size);
+    pot_host_        = (float*)malloc((size_t)pot_sz);
+    host_coords_     = (float*)malloc(static_cast<size_t>(n_atoms) * 3 * sizeof(float));
+    host_charges_    = (float*)malloc(static_cast<size_t>(n_atoms) * sizeof(float));
+    host_dft_matrix_ = (float*)malloc((size_t)dft_size);
+    host_influence_  = (float*)malloc((size_t)mesh_size);
+
+    // CWE-476 fix: check ALL malloc returns (host_dft_matrix_ and host_influence_
+    // were previously unchecked). free(NULL) is safe, so this cleans up correctly
+    // regardless of which allocation failed.
+    if (!pot_host_ || !host_coords_ || !host_charges_ ||
+        !host_dft_matrix_ || !host_influence_) {
+        fprintf(stderr, "[PME] Failed to allocate host buffers (malloc returned null)\n");
+        free(pot_host_);        pot_host_ = nullptr;
+        free(host_coords_);     host_coords_ = nullptr;
+        free(host_charges_);    host_charges_ = nullptr;
+        free(host_dft_matrix_); host_dft_matrix_ = nullptr;
+        free(host_influence_);  host_influence_ = nullptr;
+        return -1;
+    }
 
     // Use external context/stream if provided
     if (external_context && external_stream) {
@@ -117,14 +136,14 @@ int32_t PMEHost::Initialize(
         owns_stream_ = true;
     }
 
-    // Allocate device memory
-    aclrtMalloc(&coords_,     n_atoms * 3 * sizeof(float),  ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc(&charges_,    n_atoms * sizeof(float),      ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc(&mesh_re_,    mesh_size,                     ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc(&mesh_im_,    mesh_size,                     ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc(&dft_matrix_, dft_size,                      ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc(&influence_,  mesh_size,                     ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc(&pot_,        pot_sz,                        ACL_MEM_MALLOC_HUGE_FIRST);
+    // Allocate device memory (sizes computed in 64-bit above; cast to size_t)
+    aclrtMalloc(&coords_,     static_cast<size_t>(n_atoms) * 3 * sizeof(float), ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&charges_,    static_cast<size_t>(n_atoms) * sizeof(float),     ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&mesh_re_,    (size_t)mesh_size, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&mesh_im_,    (size_t)mesh_size, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&dft_matrix_, (size_t)dft_size,  ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&influence_,  (size_t)mesh_size, ACL_MEM_MALLOC_HUGE_FIRST);
+    aclrtMalloc(&pot_,        (size_t)pot_sz,    ACL_MEM_MALLOC_HUGE_FIRST);
     // forces_ is linked externally
 
     // Setup GM
@@ -246,8 +265,16 @@ int32_t PMEHost::SetCoordinates(const float* host_coords) {
 // ============================================================
 int32_t PMEHost::SetCharges(const float* host_charges, int32_t n_atoms) {
     if (!initialized_) return -1;
-    memcpy(host_charges_, host_charges, n_atoms * sizeof(float));
-    int32_t sz = n_atoms * sizeof(float);
+    // CWE-120 fix: host_charges_ and charges_ were sized for n_atoms_ during
+    // Initialize. The caller n_atoms must match, otherwise a larger value causes
+    // a heap buffer overflow on memcpy / aclrtMemcpy.
+    if (n_atoms != n_atoms_) {
+        fprintf(stderr, "[PME] SetCharges: n_atoms(%d) != initialized n_atoms_(%d)\n",
+                n_atoms, n_atoms_);
+        return -1;
+    }
+    size_t sz = static_cast<size_t>(n_atoms_) * sizeof(float);
+    memcpy(host_charges_, host_charges, sz);
     aclError ret = aclrtMemcpy(charges_, sz, host_charges, sz, ACL_MEMCPY_HOST_TO_DEVICE);
     return (ret == ACL_SUCCESS) ? 0 : -1;
 }

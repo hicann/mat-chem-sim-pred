@@ -10,6 +10,8 @@
  * This enables the NPT step to run entirely on NPU + minimal host scalars.
  */
 
+#include <new>
+
 #include "vv_host.h"
 
 // ============================================================
@@ -148,13 +150,33 @@ int32_t VVHost::Initialize(
     coords_ = shared_coords;
     forces_ = shared_forces;
 
-    int32_t vel_sz = n_atoms_ * 3 * sizeof(float);
-    int32_t mass_sz = n_atoms_ * sizeof(float);
-    int32_t pv_sz = 4 * sizeof(float);
+    // CWE-476/190 fix: compute sizes in 64-bit and check ALL aclrtMalloc returns.
+    // Previously velocities_/masses_/pot_virial_ were allocated without checking
+    // aclrtMalloc's return, so a failure left them null and later used (CWE-476).
+    // Sizes are also computed in 64-bit to avoid int32 overflow (CWE-190).
+    if (n_atoms_ <= 0) {
+        fprintf(stderr, "[VV] Initialize: invalid n_atoms=%d\n", n_atoms_);
+        return -1;
+    }
+    size_t vel_sz = static_cast<size_t>(n_atoms_) * 3 * sizeof(float);
+    size_t mass_sz = static_cast<size_t>(n_atoms_) * sizeof(float);
+    size_t pv_sz = 4 * sizeof(float);
 
-    aclrtMalloc(&velocities_, vel_sz, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc(&masses_, mass_sz, ACL_MEM_MALLOC_HUGE_FIRST);
-    aclrtMalloc(&pot_virial_, pv_sz, ACL_MEM_MALLOC_HUGE_FIRST);
+    if (aclrtMalloc(&velocities_, vel_sz, ACL_MEM_MALLOC_HUGE_FIRST) != ACL_SUCCESS) {
+        fprintf(stderr, "[VV] aclrtMalloc velocities_ failed\n");
+        return -1;
+    }
+    if (aclrtMalloc(&masses_, mass_sz, ACL_MEM_MALLOC_HUGE_FIRST) != ACL_SUCCESS) {
+        fprintf(stderr, "[VV] aclrtMalloc masses_ failed\n");
+        aclrtFree(velocities_); velocities_ = nullptr;
+        return -1;
+    }
+    if (aclrtMalloc(&pot_virial_, pv_sz, ACL_MEM_MALLOC_HUGE_FIRST) != ACL_SUCCESS) {
+        fprintf(stderr, "[VV] aclrtMalloc pot_virial_ failed\n");
+        aclrtFree(masses_); masses_ = nullptr;
+        aclrtFree(velocities_); velocities_ = nullptr;
+        return -1;
+    }
 
     float zeros[4] = {0};
     aclrtMemcpy(pot_virial_, pv_sz, zeros, pv_sz, ACL_MEMCPY_HOST_TO_DEVICE);
@@ -294,18 +316,24 @@ void VVHost::StepFinish(
 // ============================================================
 int32_t VVHost::StepVRescale() {
     if (cfg_tau_t_ <= 0) return 0;
-    // Download velocities, scale on host, upload back
-    float* vel = new float[n_atoms_ * 3];
-    aclrtMemcpy(vel, n_atoms_ * 3 * sizeof(float),
-                velocities_, n_atoms_ * 3 * sizeof(float),
-                ACL_MEMCPY_DEVICE_TO_HOST);
+    // Download velocities, scale on host, upload back.
+    // CWE-190/alloc fix: compute element/byte counts in 64-bit to avoid int32
+    // overflow (n_atoms_*3 overflows when n_atoms_ > ~715M), and use nothrow new
+    // with a null check instead of throwing new[] (bad_alloc) which would
+    // terminate the whole MD simulation on an allocation failure.
+    size_t n_vel = static_cast<size_t>(n_atoms_) * 3;
+    size_t vel_bytes = n_vel * sizeof(float);
+    float* vel = new (std::nothrow) float[n_vel];
+    if (!vel) {
+        fprintf(stderr, "[VV] StepVRescale: failed to allocate velocity buffer\n");
+        return -1;
+    }
+    aclrtMemcpy(vel, vel_bytes, velocities_, vel_bytes, ACL_MEMCPY_DEVICE_TO_HOST);
     float lambda_f = (float)vrescale_lambda_;
-    for (int32_t i = 0; i < n_atoms_ * 3; i++) {
+    for (size_t i = 0; i < n_vel; i++) {
         vel[i] *= lambda_f;
     }
-    aclrtMemcpy(velocities_, n_atoms_ * 3 * sizeof(float),
-                vel, n_atoms_ * 3 * sizeof(float),
-                ACL_MEMCPY_HOST_TO_DEVICE);
+    aclrtMemcpy(velocities_, vel_bytes, vel, vel_bytes, ACL_MEMCPY_HOST_TO_DEVICE);
     delete[] vel;
     return 0;
 }
@@ -377,8 +405,16 @@ double VVHost::Step(
     double box = box_size ? *box_size : 10.0;
     StepFinish(&temperature, &virial, &box);
 
+    // 检查 StepVRescale 返回值：若速度缩放分配失败(返回 -1)却继续执行
+    // StepScale()，会用未经 λ 缩放的错误速度数据送入 thermo_scale 内核，
+    // 产生静默数值错误(无报错无崩溃)，比旧代码 bad_alloc 终止更危险。
+    // 失败时与上方 StepIntegrate 错误处理一致，直接返回 0.0 终止本步。
     if (cfg_tau_t_ > 0.0) {
-        StepVRescale();
+        int32_t vret = StepVRescale();
+        if (vret != 0) {
+            fprintf(stderr, "[VV] StepVRescale failed (ret=%d)\n", vret);
+            return 0.0;
+        }
     }
 
     StepScale();

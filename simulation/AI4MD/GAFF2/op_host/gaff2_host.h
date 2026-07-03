@@ -164,8 +164,18 @@ public:
     // ============================================================
     int32_t UploadExclusion(const int32_t* host_exclusion, int32_t n_atoms) {
         if (!initialized_ || !exclusion_) return -1;
-        int32_t sz = n_atoms * n_atoms * sizeof(int32_t);
-        CHECK_ACL(aclrtMemcpy(exclusion_, sz, host_exclusion, sz, ACL_MEMCPY_HOST_TO_DEVICE), "UploadExclusion");
+        // CWE-120 fix: exclusion_ was allocated for config_.n_atoms. The caller-
+        // supplied n_atoms must match, otherwise a larger value overflows the
+        // buffer (heap overflow) and a smaller value leaves stale data.
+        if (n_atoms != config_.n_atoms) {
+            fprintf(stderr, "[GAFF2] UploadExclusion: n_atoms(%d) != initialized n_atoms(%d)\n",
+                    n_atoms, config_.n_atoms);
+            return -1;
+        }
+        // CWE-190 fix: compute the size in 64-bit arithmetic to avoid overflow.
+        int64_t sz = static_cast<int64_t>(config_.n_atoms) * config_.n_atoms * sizeof(int32_t);
+        CHECK_ACL(aclrtMemcpy(exclusion_, (size_t)sz, host_exclusion, (size_t)sz,
+                              ACL_MEMCPY_HOST_TO_DEVICE), "UploadExclusion");
         return 0;
     }
 
