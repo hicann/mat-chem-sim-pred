@@ -1,0 +1,12 @@
+[
+  {
+    "op": "BatchSpdInvFp32",
+    "language": "cpp",
+    "input_desc": [
+      {"name": "g", "param_type": "required", "format": ["ND"], "type": ["float32"]}
+    ],
+    "output_desc": [
+      {"name": "gi", "param_type": "required", "format": ["ND"], "type": ["float32"]}
+    ]
+  }
+]

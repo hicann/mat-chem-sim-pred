@@ -1,0 +1,14 @@
+[
+  {
+    "op": "LtcScanFused",
+    "language": "cpp",
+    "input_desc": [
+      {"name": "x", "param_type": "required", "format": ["ND"], "type": ["float32"]},
+      {"name": "weight", "param_type": "required", "format": ["ND"], "type": ["float32"]},
+      {"name": "bias", "param_type": "required", "format": ["ND"], "type": ["float32"]}
+    ],
+    "output_desc": [
+      {"name": "output", "param_type": "required", "format": ["ND"], "type": ["float32"]}
+    ]
+  }
+]

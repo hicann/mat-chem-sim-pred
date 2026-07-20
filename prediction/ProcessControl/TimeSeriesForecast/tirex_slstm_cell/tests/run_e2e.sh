@@ -1,0 +1,18 @@
+echo E2E_MARK
+cd /home/ql2025/work/tslib_cann_ops_dev
+source /usr/local/Ascend/ascend-toolkit/set_env.sh
+CANN=/usr/local/Ascend/ascend-toolkit/latest
+M=build/msopgen_tirex_slstm_cell/build_out
+SOC=ascend910b
+KDIR=$M/op_kernel/kernel
+CFG=$KDIR/config/$SOC
+python3 build/msopgen_tirex_slstm_cell/cmake/util/ascendc_ops_config.py -p "$KDIR/$SOC" -s "$SOC" -o "$CFG" 2>/dev/null
+VENDOR=$M/custom_opp_vendor
+rm -rf "$VENDOR"; mkdir -p "$VENDOR/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64"
+ln -sfn "$PWD/$KDIR" "$VENDOR/op_impl/ai_core/tbe/kernel"
+ln -sfn "$PWD/$M/op_host/libcust_opmaster_rt2.0.so" "$VENDOR/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64/libcust_opmaster_rt2.0.so"
+export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+export ASCEND_CUSTOM_OPP_PATH=$PWD/$VENDOR
+export LD_LIBRARY_PATH=$PWD/$M/autogen:$PWD/$M/op_api/lib:$CANN/lib64:$CANN/runtime/lib64:$LD_LIBRARY_PATH
+python3 tirex_e2e.py 2>&1 | grep -vE "Warning|warn|UserWarning|FutureWarning" | tail -40
+echo E2E_END

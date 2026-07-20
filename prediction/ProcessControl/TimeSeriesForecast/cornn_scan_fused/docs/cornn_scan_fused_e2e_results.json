@@ -1,0 +1,17 @@
+{
+  "op": "CornnScanFused",
+  "dtype": "float32",
+  "device": "Ascend 910B3",
+  "baseline": "framework torch-npu per-timestep coRNN IMEX loop (fair, not naive python)",
+  "shape": {"B": 32, "L": 336, "enc_in": 11, "H": 64, "layers": 3},
+  "correctness_max_diff": 1.4901161193847656e-07,
+  "correctness_rel": 3.494921242140439e-07,
+  "component_torch_ms": 97.95883949846029,
+  "component_fused_ms": 1.7267733346670866,
+  "component_speedup": 56.72941406484382,
+  "e2e_torch_ms": 338.72636314481497,
+  "e2e_fused_ms": 6.255151703953743,
+  "e2e_speedup": 54.15158243575668,
+  "gates": {"correctness": "PASS (<=1e-3)", "component": "PASS (>1.5x)", "e2e": "PASS (>3x)"},
+  "verdict": "STRONG"
+}

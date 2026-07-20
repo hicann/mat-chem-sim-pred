@@ -1,0 +1,43 @@
+{
+  "device": "Ascend 910B3",
+  "model": "Koopa",
+  "note": "stock uses torch.linalg.lstsq (NPU->CPU fallback); custom uses native bmm + BatchSpdInvFp32 Gram inverse, all on-device",
+  "e2e": [
+    {
+      "seq_len": 336,
+      "pred_len": 96,
+      "B": 32,
+      "enc_in": 7,
+      "m_snapshots": 3,
+      "dynamic_dim": 128,
+      "stock_lstsq_cpu_ms": 5300.640072673559,
+      "custom_ms": 8.802317688241601,
+      "speedup": 602.1868626434958,
+      "max_diff": 2.384185791015625e-07
+    },
+    {
+      "seq_len": 720,
+      "pred_len": 96,
+      "B": 32,
+      "enc_in": 7,
+      "m_snapshots": 7,
+      "dynamic_dim": 128,
+      "stock_lstsq_cpu_ms": 14729.95543278133,
+      "custom_ms": 9.7697040066123,
+      "speedup": 1507.7176773023878,
+      "max_diff": 2.980232238769531e-07
+    },
+    {
+      "seq_len": 512,
+      "pred_len": 96,
+      "B": 16,
+      "enc_in": 7,
+      "m_snapshots": 5,
+      "dynamic_dim": 128,
+      "stock_lstsq_cpu_ms": 5299.982388969511,
+      "custom_ms": 8.888128097169101,
+      "speedup": 596.2990554397583,
+      "max_diff": 2.384185791015625e-07
+    }
+  ]
+}

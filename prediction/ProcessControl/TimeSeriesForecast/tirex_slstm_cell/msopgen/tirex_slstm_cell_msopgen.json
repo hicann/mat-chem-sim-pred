@@ -1,0 +1,16 @@
+[
+  {
+    "op": "TirexSlstmCell",
+    "language": "cpp",
+    "input_desc": [
+      {"name": "input", "param_type": "required", "format": ["ND"], "type": ["float32"]},
+      {"name": "recurrent_kernel", "param_type": "required", "format": ["ND"], "type": ["float32"]},
+      {"name": "bias", "param_type": "required", "format": ["ND"], "type": ["float32"]},
+      {"name": "initial_state", "param_type": "required", "format": ["ND"], "type": ["float32"]}
+    ],
+    "output_desc": [
+      {"name": "output", "param_type": "required", "format": ["ND"], "type": ["float32"]},
+      {"name": "final_state", "param_type": "required", "format": ["ND"], "type": ["float32"]}
+    ]
+  }
+]

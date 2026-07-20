@@ -1,0 +1,17 @@
+{
+  "op": "CfcScanFused",
+  "dtype": "float32",
+  "device": "Ascend 910B3",
+  "baseline": "framework torch-npu per-timestep CfC loop (fair, not naive python)",
+  "shape": {"B": 32, "L": 336, "enc_in": 11, "H": 64, "layers": 3},
+  "correctness_max_diff": 2.3283064365386963e-07,
+  "correctness_rel": 7.343422695175309e-07,
+  "component_torch_ms": 104.39325356855989,
+  "component_fused_ms": 1.2306685093790293,
+  "component_speedup": 84.82646039365599,
+  "e2e_torch_ms": 330.00342990271747,
+  "e2e_fused_ms": 4.697209922596812,
+  "e2e_speedup": 70.25520156448063,
+  "gates": {"correctness": "PASS (<=1e-3)", "component": "PASS (>1.5x)", "e2e": "PASS (>3x)"},
+  "verdict": "STRONG"
+}

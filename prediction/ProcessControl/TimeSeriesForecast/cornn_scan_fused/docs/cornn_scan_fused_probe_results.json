@@ -1,0 +1,15 @@
+{
+  "op": "CornnScanFused",
+  "dtype": "float32",
+  "device": "Ascend 910B3",
+  "gate": "correctness (probe vs CPU oracle)",
+  "threshold": 1e-3,
+  "cases": [
+    {"B": 4,  "L": 7,  "IN": 16, "H": 16, "max_diff": 2.32831e-09},
+    {"B": 8,  "L": 33, "IN": 21, "H": 32, "max_diff": 1.49012e-08},
+    {"B": 16, "L": 64, "IN": 11, "H": 64, "max_diff": 2.60770e-08},
+    {"B": 8,  "L": 50, "IN": 64, "H": 64, "max_diff": 3.35276e-08}
+  ],
+  "note": "includes non-8-multiple IN=21 and IN=11 (DataCopyPad path); dt=0.042 gamma=1 eps=1",
+  "verdict": "PASS"
+}

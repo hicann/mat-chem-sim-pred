@@ -1,0 +1,12 @@
+{
+  "device": "npu:0 (Ascend 910B3)",
+  "dtype": "fp32",
+  "threshold": 1e-3,
+  "cases": [
+    {"B": 4,  "L": 7,  "IN": 16, "H": 16, "max_diff": 5.52973e-10},
+    {"B": 8,  "L": 33, "IN": 21, "H": 32, "max_diff": 9.31323e-09},
+    {"B": 16, "L": 64, "IN": 11, "H": 64, "max_diff": 2.98023e-08},
+    {"B": 8,  "L": 50, "IN": 64, "H": 64, "max_diff": 2.04891e-08}
+  ],
+  "verdict": "PASS (all <= 1e-3, incl. unaligned IN=21/11)"
+}

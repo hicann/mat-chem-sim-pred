@@ -1,0 +1,12 @@
+{
+  "shape": {"B": 32, "L": 336, "enc_in": 11, "H": 64, "layers": 3, "unfolds_K": 6},
+  "correctness_max_diff": 2.5331974029541016e-07,
+  "correctness_rel": 1.215652275280523e-06,
+  "component_torch_ms": 379.2107426561415,
+  "component_fused_ms": 4.59971884265542,
+  "component_speedup": 82.4421569291446,
+  "e2e_torch_ms": 1134.7054820507765,
+  "e2e_fused_ms": 14.755203621461987,
+  "e2e_speedup": 76.9020551095822,
+  "verdict": "STRONG (component 82.44x > 1.5x, e2e 76.90x > 3x, max_diff 2.53e-7 <= 1e-3)"
+}

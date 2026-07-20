@@ -1,0 +1,13 @@
+{
+  "device": "npu:0 (Ascend 910B3)",
+  "dtype": "fp32",
+  "threshold": 1e-3,
+  "unfolds_K": 6,
+  "cases": [
+    {"B": 4,  "L": 7,  "IN": 16, "H": 16, "max_diff": 1.96882e-06},
+    {"B": 8,  "L": 33, "IN": 21, "H": 32, "max_diff": 3.71784e-06},
+    {"B": 16, "L": 64, "IN": 11, "H": 64, "max_diff": 3.91994e-06},
+    {"B": 8,  "L": 50, "IN": 64, "H": 64, "max_diff": 3.90969e-06}
+  ],
+  "verdict": "PASS (all <= 1e-3, incl. unaligned IN=21/11)"
+}

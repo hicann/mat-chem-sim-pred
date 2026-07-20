@@ -1,0 +1,42 @@
+[
+  {
+    "op": "AutoCorrFusedAggregate",
+    "language": "cpp",
+    "input_desc": [
+      {
+        "name": "query",
+        "param_type": "required",
+        "format": ["ND"],
+        "type": ["float32"]
+      },
+      {
+        "name": "key",
+        "param_type": "required",
+        "format": ["ND"],
+        "type": ["float32"]
+      },
+      {
+        "name": "value",
+        "param_type": "required",
+        "format": ["ND"],
+        "type": ["float32"]
+      }
+    ],
+    "output_desc": [
+      {
+        "name": "output",
+        "param_type": "required",
+        "format": ["ND"],
+        "type": ["float32"]
+      }
+    ],
+    "attr": [
+      {
+        "name": "top_k",
+        "param_type": "optional",
+        "type": "int",
+        "default_value": "1"
+      }
+    ]
+  }
+]

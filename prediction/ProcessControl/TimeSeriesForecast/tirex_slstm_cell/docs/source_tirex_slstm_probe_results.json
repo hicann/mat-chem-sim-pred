@@ -1,0 +1,22 @@
+{
+  "date": "2026-06-24",
+  "device": "Ascend 910B3 / CANN 8.1.RC1",
+  "operator": "TirexSlstmCell (aclnnTirexSlstmCell)",
+  "kernel": "vectorized fused scan, kRowBlk=8, block_dim=min(batch*num_heads, GetCoreNumAiv())",
+  "correctness_oracle": "C++ CPU Ref() in tirex_slstm_cell_probe.cpp (stabilized sLSTM math)",
+  "baselines_profiling_shape_B64_S64_H512_heads4": {
+    "torch_npu_slstm_cell_impl_ms": 54.6,
+    "old_scalar_custom_kernel_ms": 3738
+  },
+  "tuning_block_dim": {
+    "before_min_batch_32": {"B64_S64": 4.20, "B16_S64": 1.96, "B8_S32_H256": 0.58},
+    "after_min_groups_aiv": {"B64_S64": 3.26, "B16_S64": 1.04, "B8_S32_H256": 0.21},
+    "kRowBlk_8_vs_16_B64_S64_ms": {"k8": 3.26, "k16": 3.46, "note": "k=8 kept; matvec is not DataCopy-count bound"}
+  },
+  "shapes": [
+    {"B": 64, "S": 64,  "H": 512, "heads": 4, "avg_ms": 3.26, "max_diff": 4.76837e-07, "speedup_vs_torch": 16.7},
+    {"B": 64, "S": 128, "H": 512, "heads": 4, "avg_ms": 6.51, "max_diff": 4.76837e-07},
+    {"B": 16, "S": 64,  "H": 512, "heads": 4, "avg_ms": 1.10, "max_diff": 4.76837e-07},
+    {"B": 8,  "S": 32,  "H": 256, "heads": 4, "avg_ms": 0.25, "max_diff": 4.76837e-07}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "op": "CfcScanFused",
+  "dtype": "float32",
+  "device": "Ascend 910B3",
+  "gate": "correctness (probe vs CPU oracle)",
+  "threshold": 1e-3,
+  "cases": [
+    {"B": 4,  "L": 7,  "IN": 16, "H": 16, "max_diff": 9.87202e-08},
+    {"B": 8,  "L": 33, "IN": 21, "H": 32, "max_diff": 1.21072e-07},
+    {"B": 16, "L": 64, "IN": 11, "H": 64, "max_diff": 2.23517e-07},
+    {"B": 8,  "L": 50, "IN": 64, "H": 64, "max_diff": 2.38419e-07}
+  ],
+  "note": "includes non-8-multiple IN=21 and IN=11 (DataCopyPad path)",
+  "verdict": "PASS"
+}

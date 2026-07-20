@@ -1,0 +1,42 @@
+{
+  "device": "Ascend 910B3",
+  "op": "BatchSpdInvFp32",
+  "bench": [
+    {
+      "B": 16,
+      "m": 3,
+      "E": 128,
+      "custom_ms": 0.38554911501705647,
+      "lstsq_cpu_fallback_ms": 932.4680159799755,
+      "speedup": 2418.54534133407,
+      "max_diff_vs_lstsq": 5.960464477539063e-08
+    },
+    {
+      "B": 16,
+      "m": 6,
+      "E": 128,
+      "custom_ms": 0.328294113278389,
+      "lstsq_cpu_fallback_ms": 1799.4054609909654,
+      "speedup": 5481.077449186832,
+      "max_diff_vs_lstsq": 7.450580596923828e-08
+    },
+    {
+      "B": 32,
+      "m": 7,
+      "E": 128,
+      "custom_ms": 0.3385758213698864,
+      "lstsq_cpu_fallback_ms": 4341.748154256493,
+      "speedup": 12823.56234621146,
+      "max_diff_vs_lstsq": 6.798654794692993e-08
+    },
+    {
+      "B": 32,
+      "m": 5,
+      "E": 256,
+      "custom_ms": 0.3373828250914812,
+      "lstsq_cpu_fallback_ms": 3282.031718734652,
+      "speedup": 9727.915811496125,
+      "max_diff_vs_lstsq": 5.960464477539063e-08
+    }
+  ]
+}

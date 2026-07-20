@@ -1,0 +1,16 @@
+{
+  "shape": {
+    "B": 64,
+    "S": 64,
+    "H": 512,
+    "heads": 4
+  },
+  "correctness_max_diff": 1.4454126358032227e-06,
+  "correctness_rel": 1.4830156168650325e-06,
+  "torch_cell_impl_ms": 52.349281031638384,
+  "torch_slstm_layer_ms": 53.91039699316025,
+  "custom_op_ms": 3.6576595157384872,
+  "custom_layer_ms": 5.1530953496694565,
+  "speedup_cell": 14.312234587824662,
+  "speedup_layer": 10.461750333538523
+}
