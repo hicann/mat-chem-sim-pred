@@ -31,8 +31,9 @@ mat-chem-sim-pred/
 │   ├── SmallData/                           # 小数据预测优化模型
 │   │   ├── kernels.py                       #   GP 核函数参考实现 🔧
 │   │   └── gpr.py                           #   GP 回归 + BO 参考实现 🔧
-│   └── ProcessControl/                      # 工业过程控制与 PID 整定算子
-│       └── PIDModelFit/                     #   FOPDT/IPDT/SOPDT 模型辨识算子 ✅
+│   └── ProcessControl/                      # 工业过程控制与预测
+│       ├── PIDModelFit/                     #   PID 整定全流程算子（12 个）✅
+│       └── TimeSeriesForecast/              #   时序预测模型算子（10 个）✅
 ├── template/                                # 算子贡献模板
 │   ├── algorithm.md                         #   算法说明模板
 │   ├── references.md                        #   参考文献模板
@@ -58,11 +59,76 @@ mat-chem-sim-pred/
 | 子方向 | 状态 | 目标 | 关键算子/模型类型 |
 |--------|------|------|-------------------|
 | **小数据预测优化模型** | 🔧 PyTorch 参考 | 解决标记数据稀少的化工场景，聚焦小样本/主动学习/贝叶斯优化 | 高斯过程回归、贝叶斯神经网络、贝叶斯优化、度量学习等 |
-| **工业过程控制模型辨识** | ✅ Ascend C 就绪 | 面向 PID 整定、自整定与数字孪生场景，加速多回路、多候选过程模型辨识 | FOPDT、IPDT、SOPDT basis-GEMM fit 算子 |
+| **工业过程控制模型辨识** | ✅ Ascend C 就绪 | 面向 PID 整定、自整定与数字孪生场景，覆盖模型辨识 → 诊断 → 整定 → 仿真选优 → 评估全流程 | 模型辨识（FOPDT/IPDT/SOPDT basis-GEMM fit）、残差诊断、PID 参数生成（ZN/IMC/CC）、候选闭环仿真/评分/选优、响应特征提取、控制性能与过程能力评估（共 12 个算子） |
+| **时序预测模型** | ✅ Ascend C 就绪 | 面向化工过程 DCS/传感器时序数据，将递归扫描、lag 聚合与不支持路径下沉为单 NPU kernel | Mamba/SSM 选择性扫描、Autoformer 自相关聚合、Koopa/DMD 批量 SPD 求逆、TiRex/xLSTM sLSTM 单元、CfC/coRNN/SRU/UnICORNN/LTC 连续时间 RNN 扫描融合（共 10 个算子） |
 
 > ✅ Ascend C 就绪 = 已完成 Ascend C 算子开发，含完整测试 | 🔧 PyTorch 参考 = 提供 PyTorch 参考实现，可作为 Ascend C 迁移基础
 
 > 详细算子规划请参见 [roadmap.md](roadmap.md)。
+
+## 算子清单
+
+本仓库当前共包含 **31 个算子**，覆盖科学计算与预测优化两大方向。
+
+### 科学计算 — 机器学习分子动力学（AI4MD）
+
+| 算子 | 说明 | 状态 |
+|------|------|------|
+| `Lennard_Jones` | Lennard-Jones 力场 | ✅ Ascend C |
+| `GAFF2` | GAFF2 力场 | ✅ Ascend C |
+| `PME` | PME 静电求和 | ✅ Ascend C |
+| `SHAKE` | SHAKE 约束算法 | ✅ Ascend C |
+| `velocity-verlet` | Velocity Verlet 积分器 | ✅ Ascend C |
+| `Dissipative_particle_dynamics` | DPD 耗散粒子动力学 | ✅ Ascend C |
+
+### 科学计算 — AI for PDE（AI4PDE）
+
+| 算子 | 说明 | 状态 |
+|------|------|------|
+| `pinn` | PINN 物理信息神经网络推理 | ✅ Ascend C |
+| `fno` | FNO 傅里叶神经网络算子推理 | ✅ Ascend C |
+| `deeponet` | DeepONet 深度算子网络推理 | ✅ Ascend C |
+
+### 预测优化 — PID 整定全流程（PIDModelFit）
+
+12 个算子按 PID 整定 6 个阶段组织，覆盖从模型辨识到性能评估的完整链路：
+
+| 阶段 | 算子 | 说明 | 状态 |
+|------|------|------|------|
+| **① 模型辨识** | `pid_fopdt_basis_gemm_fit` | FOPDT 模型辨识（basis-GEMM 加速） | ✅ Ascend C |
+| | `pid_ipdt_basis_gemm_fit` | IPDT 模型辨识（basis-GEMM 加速） | ✅ Ascend C |
+| | `pid_sopdt_basis_gemm_fit` | SOPDT 模型辨识（basis-GEMM 加速） | ✅ Ascend C |
+| **② 模型质量诊断** | `pid_residual_diagnostics` | 残差诊断 | ✅ Ascend C |
+| | `pid_windowed_residual_diagnostics` | 窗口残差诊断 | ✅ Ascend C |
+| **③ PID 参数生成** | `pid_tuning_rule_batch` | 批量整定规则（Ziegler-Nichols / IMC / Cohen-Coon） | ✅ Ascend C |
+| **④ 候选闭环仿真/评分/选优** | `pid_fopdt_batch_rollout_score` | FOPDT 候选闭环仿真 + 评分 + best 选择 | ✅ Ascend C |
+| | `pid_ipdt_batch_rollout_score` | IPDT 候选闭环仿真 + 评分 + best 选择 | ✅ Ascend C |
+| | `pid_sopdt_batch_rollout_score` | SOPDT 候选闭环仿真 + 评分 + best 选择 | ✅ Ascend C |
+| **⑤ 候选响应特征提取** | `pid_step_response_features` | 阶跃响应特征提取（上升时间/超调/稳态误差等） | ✅ Ascend C |
+| **⑥ 控制性能与过程能力评估** | `pid_control_performance_metrics` | 控制性能指标（IAE/ISE/ITAE 等） | ✅ Ascend C |
+| | `pid_process_capability_metrics` | 过程能力指数（Cp/Cpk 等） | ✅ Ascend C |
+
+> PIDModelFit 提供 `common/`（CPU/NumPy reference）、`docs/`（设计文档与测试报告）、`e2e/`（全链路验证驱动）三个支撑模块。
+
+### 预测优化 — 时序预测模型（TimeSeriesForecast）
+
+10 个算子面向时序预测模型的核心子图，将递归扫描、lag 聚合与框架不支持路径下沉为单 NPU kernel，消除 kernel launch 与中间 Tensor 物化开销：
+
+| 类别 | 算子 | 服务模型 | 说明 | 状态 |
+|------|------|----------|------|------|
+| **SSM 选择性扫描** | `selective_scan_1d` | Mamba / SSM | 时间维选择性扫描融合 | ✅ Ascend C |
+| | `s6scan_fused` | S6 / Mamba-style SSM | S6 扫描 + softplus + 累积融合 | ✅ Ascend C |
+| **lag 聚合融合** | `autocorr_fused_aggregate` | Autoformer | 自相关筛选 + lag 权重 + 时移聚合 | ✅ Ascend C |
+| **不支持路径替换** | `batch_spd_inv_fp32` | Koopa / DMD | 批量 SPD 矩阵求逆，替换 `torch.linalg.lstsq` CPU fallback | ✅ Ascend C |
+| | `tirex_slstm_cell` | TiRex / xLSTM | sLSTM 门控 + 稳定化 + 状态更新融合 | ✅ Ascend C |
+| **连续时间 RNN 扫描** | `cfc_scan_fused` | CfC | CfC 递归扫描融合 | ✅ Ascend C |
+| | `cornn_scan_fused` | coRNN | coRNN 递归扫描融合 | ✅ Ascend C |
+| | `sru_scan_fused` | SRU | SRU 递归扫描融合 | ✅ Ascend C |
+| | `unicornn_scan_fused` | UnICORNN | UnICORNN 递归扫描融合 | ✅ Ascend C |
+| | `ltc_scan_fused` | LTC | LTC 递归扫描融合 | ✅ Ascend C |
+
+> TimeSeriesForecast 提供 `docs/`（文档与 TorchAir 性能报告）和 `deliverables/`（评审与交付材料）两个支撑目录。
+
 
 ## 贡献模板
 
@@ -151,7 +217,7 @@ mat-chem-sim-pred/
 
 ## 算子贡献指南
 
-详情参考公告 [算子贡献指南 1.0](https://gitcode.com/cann/mat-chem-sim-pred/discussions/1)
+详情 [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### 提交流程：
 
