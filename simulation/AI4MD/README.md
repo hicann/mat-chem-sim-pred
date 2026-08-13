@@ -216,4 +216,4 @@ Grimme D3 / D4 色散校正作为 ML 势的物理先验修正：
 - D3/D4 色散校正算子
 - 势能面在线拟合算子（sGP / 贝叶斯线性回归）
 
-> 详细规划与待迁移模型清单请参见 [roadmap.md](../../roadmap.md) 和 [todo-algo-model.md](../../todo-algo-model.md)。
+> 详细规划与待迁移模型清单请参见 [roadmap.md](../../roadmap.md) 。

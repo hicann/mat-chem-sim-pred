@@ -165,4 +165,4 @@ GP 是小数据回归的经典方法：
 - 物理信息 GP 算子（PIGP：微分约束 + GP 先验）
 - 数据增强算子（VAE / GAN / Diffusion 生成）
 
-> 详细规划与待迁移模型清单请参见 [roadmap.md](../../roadmap.md) 和 [todo-algo-model.md](../../todo-algo-model.md)。
+> 详细规划与待迁移模型清单请参见 [roadmap.md](../../roadmap.md) 。

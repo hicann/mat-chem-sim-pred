@@ -109,4 +109,4 @@
 - 聚合物性质预测算子（Polymer GNN）
 - 配方-结构-性能多模态融合算子
 
-> 详细规划与待迁移模型清单请参见 [roadmap.md](../../roadmap.md) 和 [todo-algo-model.md](../../todo-algo-model.md)。
+> 详细规划与待迁移模型清单请参见 [roadmap.md](../../roadmap.md) 。
