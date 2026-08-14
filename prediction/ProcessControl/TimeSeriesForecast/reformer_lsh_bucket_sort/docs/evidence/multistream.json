@@ -1,0 +1,17 @@
+{
+  "operator": "bucket",
+  "iterations_per_stream": 20,
+  "workspace_size": 0,
+  "distinct_output_storage": true,
+  "stream_a_max_abs_diff": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "stream_b_max_abs_diff": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "status": "pass"
+}

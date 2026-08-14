@@ -1,0 +1,62 @@
+[
+  {
+    "op": "ReformerLshBucketSort",
+    "language": "cpp",
+    "input_desc": [
+      {
+        "name": "keys",
+        "param_type": "required",
+        "format": [
+          "ND"
+        ],
+        "type": [
+          "int64"
+        ]
+      }
+    ],
+    "output_desc": [
+      {
+        "name": "sorted_keys",
+        "param_type": "required",
+        "format": [
+          "ND"
+        ],
+        "type": [
+          "int64"
+        ]
+      },
+      {
+        "name": "sticker",
+        "param_type": "required",
+        "format": [
+          "ND"
+        ],
+        "type": [
+          "int64"
+        ]
+      },
+      {
+        "name": "inverse",
+        "param_type": "required",
+        "format": [
+          "ND"
+        ],
+        "type": [
+          "int64"
+        ]
+      }
+    ],
+    "attr": [
+      {
+        "name": "sequence_length",
+        "param_type": "required",
+        "type": "int"
+      },
+      {
+        "name": "total_buckets",
+        "param_type": "required",
+        "type": "int"
+      }
+    ]
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "date": "2026-07-28",
+  "host": "node202",
+  "device": "Ascend 910B3",
+  "physical_npu": 6,
+  "cann": "8.1.RC1.alpha001",
+  "pytorch": "2.5.0",
+  "torch_npu": "2.5.1",
+  "upstream_base": "fef85c9be08c70dfb65c2254d37a3791edf9c625",
+  "source_scope": "joint-submission staged source snapshot",
+  "global_opp_install_performed": false,
+  "operator": "reformer_lsh_bucket_sort",
+  "reproducible_clean_gate": {
+    "python_tests": 7,
+    "msopgen": "pass",
+    "ascend910b_build": "pass",
+    "aclnn_smoke": "pass",
+    "smoke_max_abs_error": 0.0,
+    "smoke_hot_mean_ms": 0.0363553,
+    "unsupported_contract_status": 561002,
+    "multistream": {
+      "streams": 2,
+      "iterations_per_stream": 20,
+      "workspace_size": 0,
+      "distinct_output_storage": true,
+      "max_abs_error": 0.0,
+      "status": "pass"
+    }
+  },
+  "formal_package_gate_passed": true,
+  "official_mr_sca_ci_cla_pending": true
+}
