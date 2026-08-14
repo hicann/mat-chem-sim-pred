@@ -17,7 +17,7 @@ mat-chem-sim-pred/
 ├── simulation/                              # 科学计算方向
 │   ├── MaterialPropertyPrediction/          # 材料性质预测与材料结构生成
 │   │   └── DAO/                             #   PyTorch 基础算子库
-│   ├── AI4MD/                               # 机器学习分子动力学
+│   ├── AI4MD/                               #   分子动力学基础计算（为 ML-MD 提供基础设施）
 │   │   ├── Lennard_Jones/                   #   LJ 力场算子 ✅
 │   │   ├── GAFF2/                           #   GAFF2 力场算子 ✅
 │   │   ├── PME/                             #   PME 静电算子 ✅
@@ -54,7 +54,8 @@ mat-chem-sim-pred/
 | 子方向 | 状态 | 目标 | 关键算子/模型类型 |
 |--------|------|------|-------------------|
 | **材料性质预测与结构生成** | 🔧 PyTorch 参考 | 基于第一性原理数据构建材料性质快速预测与逆向生成能力 | 晶体图神经网络、材料描述符计算、晶体结构生成模型、相图预测等 |
-| **机器学习分子动力学** | ✅ Ascend C 就绪 | 以 ML 势替代经典力场，实现 DFT 精度下的大体系长时间 MD 模拟 | DeepMD/SchNet/MACE 推理算子、描述符在线计算、D3 色散校正等 |
+| **分子动力学基础计算（AI4MD）** | ✅ Ascend C 就绪 | 提供经典分子动力学模拟的力场、静电、约束、积分和粒子动力学基础组件，为后续 ML-MD 链路提供底层计算能力 | Lennard-Jones、GAFF2、PME、SHAKE、Velocity Verlet、DPD |
+| **机器学习分子动力学（ML-MD）** | 🔧 规划中/待建设 | 以机器学习势替代或增强经典力场，实现接近 DFT 精度的大体系长时间 MD 模拟 | DeepMD、SchNet/PaiNN、MACE/NequIP、ANI、SOAP/ACSF 在线描述符、D3/D4 色散校正、势能面在线拟合 |
 | **AI for PDE** | ✅ Ascend C 就绪 | 用 AI 方法加速或替代传统 PDE 求解器，覆盖流体/传热/结构力学 | PINN/FNO/DeepONet 推理算子等 |
 
 ### 预测优化
@@ -73,7 +74,11 @@ mat-chem-sim-pred/
 
 本仓库当前共包含 **31 个算子**，覆盖科学计算与预测优化两大方向。
 
-### 科学计算 — 机器学习分子动力学（AI4MD）
+### 科学计算 — 分子动力学基础计算（AI4MD）
+
+> 当前 `simulation/AI4MD/` 已实现的 Ascend C 算子覆盖经典力场、静电求和、约束算法、时间积分和耗散粒子动力学等基础计算能力。
+>
+> 这些组件可作为机器学习分子动力学（ML-MD）的底层基础设施，但不等同于 DeepMD、SchNet、MACE、NequIP 或 ANI 等机器学习势模型推理算子。ML 势推理、在线描述符、D3/D4 色散校正及势能面在线拟合当前均处于规划阶段，详见 [roadmap.md](roadmap.md)。
 
 | 算子 | 说明 | 状态 |
 |------|------|------|
