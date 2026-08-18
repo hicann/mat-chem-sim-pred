@@ -1,0 +1,50 @@
+{
+  "path": "msopgen_packaged_aclnn_checkpoint_ablation",
+  "device": "Ascend 910B3",
+  "model": "Autoformer",
+  "operator": "fused",
+  "dataset": "ETTh1 official test split",
+  "test_windows": 2857,
+  "sequence_length": 96,
+  "prediction_length": 24,
+  "channels": 7,
+  "checkpoint_sha256": "86fbf7ed5808cca3c223fe827ce00f5aeea6c5c562495938744cece544dc7dfe",
+  "dataset_sha256": "f18de3ad269cef59bb07b5438d79bb3042d3be49bdeecf01c1cd6d29695ee066",
+  "output_policy": "allocate",
+  "result": {
+    "batch_size": 32,
+    "windows": 2857,
+    "wall_seconds_all_variants_and_transfers": 1.5775718300137669,
+    "metrics": {
+      "framework_vectorized": {
+        "inference_ms": 720.5261409981176,
+        "batches": 90,
+        "normalized_mse": 0.5470394585504829,
+        "normalized_mae": 0.478419427257984,
+        "original_scale_mse": 12.40200062778204,
+        "original_scale_mae": 1.800097308739135,
+        "mean_batch_ms": 8.005846011090195,
+        "windows_per_second_model_only": 3965.158010842335,
+        "speedup_vs_framework_model_time": 1.0
+      },
+      "fused_packaged": {
+        "inference_ms": 606.949707493186,
+        "batches": 90,
+        "normalized_mse": 0.5470394701223098,
+        "normalized_mae": 0.4784194318358496,
+        "original_scale_mse": 12.402001018426573,
+        "original_scale_mae": 1.800097312299697,
+        "mean_batch_ms": 6.743885638813178,
+        "windows_per_second_model_only": 4707.14453723017,
+        "speedup_vs_framework_model_time": 1.1871265973156544
+      }
+    },
+    "prediction_differences_vs_framework": {
+      "fused_packaged": {
+        "max_abs_diff": 0.00010323524475097656,
+        "mean_abs_diff": 2.378618921003561e-06,
+        "rmse_diff": 5.018702823062737e-06
+      }
+    }
+  }
+}

@@ -1,0 +1,60 @@
+[
+  {
+    "op": "ReformerLshQkvGather",
+    "language": "cpp",
+    "input_desc": [
+      {
+        "name": "query_key",
+        "param_type": "required",
+        "format": [
+          "ND"
+        ],
+        "type": [
+          "float32"
+        ]
+      },
+      {
+        "name": "value",
+        "param_type": "required",
+        "format": [
+          "ND"
+        ],
+        "type": [
+          "float32"
+        ]
+      },
+      {
+        "name": "indices",
+        "param_type": "required",
+        "format": [
+          "ND"
+        ],
+        "type": [
+          "int64"
+        ]
+      }
+    ],
+    "output_desc": [
+      {
+        "name": "sorted_query_key",
+        "param_type": "required",
+        "format": [
+          "ND"
+        ],
+        "type": [
+          "float32"
+        ]
+      },
+      {
+        "name": "sorted_value",
+        "param_type": "required",
+        "format": [
+          "ND"
+        ],
+        "type": [
+          "float32"
+        ]
+      }
+    ]
+  }
+]

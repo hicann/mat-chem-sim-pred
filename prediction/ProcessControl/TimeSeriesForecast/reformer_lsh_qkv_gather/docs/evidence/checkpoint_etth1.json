@@ -1,0 +1,50 @@
+{
+  "path": "msopgen_packaged_aclnn_checkpoint_ablation",
+  "device": "Ascend 910B3",
+  "model": "Reformer",
+  "operator": "qkv",
+  "dataset": "ETTh1 official test split",
+  "test_windows": 2857,
+  "sequence_length": 96,
+  "prediction_length": 24,
+  "channels": 7,
+  "checkpoint_sha256": "bc60bb3ef492705eeee68d0cb856708a9a8d7a884fa959a5aec807a6de4b034a",
+  "dataset_sha256": "f18de3ad269cef59bb07b5438d79bb3042d3be49bdeecf01c1cd6d29695ee066",
+  "output_policy": "allocate",
+  "result": {
+    "batch_size": 32,
+    "windows": 2857,
+    "wall_seconds_all_variants_and_transfers": 3.197154049994424,
+    "metrics": {
+      "original_eager": {
+        "inference_ms": 1551.1167687363923,
+        "batches": 90,
+        "normalized_mse": 0.7956262284549774,
+        "normalized_mae": 0.6287206820210395,
+        "original_scale_mse": 20.725634759928102,
+        "original_scale_mae": 2.6398817723275485,
+        "mean_batch_ms": 17.23463076373769,
+        "windows_per_second_model_only": 1841.8987258628101,
+        "speedup_vs_framework_model_time": 1.0
+      },
+      "qkv_packaged": {
+        "inference_ms": 1337.9624038934708,
+        "batches": 90,
+        "normalized_mse": 0.7956262284549774,
+        "normalized_mae": 0.6287206820210395,
+        "original_scale_mse": 20.725634759928102,
+        "original_scale_mae": 2.6398817723275485,
+        "mean_batch_ms": 14.866248932149675,
+        "windows_per_second_model_only": 2135.3365323914404,
+        "speedup_vs_framework_model_time": 1.159312671434296
+      }
+    },
+    "prediction_differences_vs_framework": {
+      "qkv_packaged": {
+        "max_abs_diff": 0.0,
+        "mean_abs_diff": 0.0,
+        "rmse_diff": 0.0
+      }
+    }
+  }
+}

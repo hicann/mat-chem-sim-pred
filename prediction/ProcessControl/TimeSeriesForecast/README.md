@@ -1,3 +1,13 @@
+<!--
+Copyright (c) 2026 Huawei Technologies Co., Ltd.
+This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+CANN Open Software License Agreement Version 2.0 (the "License").
+Please refer to the License for details. You may not use this file except in compliance with the License.
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+See LICENSE in the root of the software repository for the full text of the License.
+-->
+
 # TimeSeriesForecast 时序预测 CANN 算子
 
 本目录承接时序预测模型中框架路径难以高效表达的 fused operator。第一批提交只包含交付件相对完整、性能证据清楚、适合单独评审的 10 个算子。
@@ -16,6 +26,14 @@
 | [sru_scan_fused](sru_scan_fused/README.md) | SRU / recurrent scan | 融合 input-only gate + peephole recurrence | component `163.48x`；E2E `71.46x` |
 | [unicornn_scan_fused](unicornn_scan_fused/README.md) | UnICORNN | 融合 diagonal oscillatory recurrence | component `160.68x`；E2E `100.43x` |
 | [ltc_scan_fused](ltc_scan_fused/README.md) | LTC / continuous-time RNN | 融合 `K * L` ODE unfold recurrence | component `82.44x`；E2E `76.90x` |
+
+## Reformer / Autoformer 推理算子
+
+| 算子目录 | 服务模型 | 主要价值 | ETTh1 完整测试集 B32 |
+|---|---|---|---|
+| [reformer_lsh_bucket_sort](reformer_lsh_bucket_sort/README.md) | Reformer | 一次完成稳定 LSH 分桶排序、sticker 和 inverse 构造 | `1558.82 -> 682.56 ms`，降低 `56.21%` |
+| [autoformer_inference_aggregate_fused](autoformer_inference_aggregate_fused/README.md) | Autoformer | 融合均值归约、TopK、softmax、循环移位和加权聚合 | `720.53 -> 606.95 ms`，降低 `15.76%` |
+| [reformer_lsh_qkv_gather](reformer_lsh_qkv_gather/README.md) | Reformer | 复用同一份 LSH index 同时整理 query/key 和 value | `1551.12 -> 1337.96 ms`，降低 `13.74%` |
 
 ## 性能口径
 
