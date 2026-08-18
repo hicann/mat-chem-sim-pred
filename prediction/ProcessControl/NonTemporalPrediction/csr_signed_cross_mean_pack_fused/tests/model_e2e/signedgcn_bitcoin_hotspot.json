@@ -1,0 +1,715 @@
+{
+  "operator": "CsrSignedCrossMeanPackFused",
+  "model": "maintained PyG SignedGCN on Bitcoin-OTC",
+  "profiled_baseline": "complete native replacement-equivalent model",
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 6005,
+      "positive_edges": 25624,
+      "negative_edges": 2851,
+      "full_model_kernel_us": 2470.568,
+      "conservative_stage_kernel_us": 1255.7350000000001,
+      "conservative_stage_hotspot_pct": 50.82778535138478,
+      "exact_stage_framework_ops": [
+        {
+          "name": "aten::index",
+          "input_shapes": "6005,32;\r\n",
+          "device_total_us": 173.75675
+        },
+        {
+          "name": "aten::index",
+          "input_shapes": "6005,32;\r\n",
+          "device_total_us": 33.859249999999996
+        },
+        {
+          "name": "aten::index",
+          "input_shapes": "6005,32;\r\n",
+          "device_total_us": 178.85625
+        },
+        {
+          "name": "aten::index",
+          "input_shapes": "6005,32;\r\n",
+          "device_total_us": 34.19925
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "6005,32;\r\n;\r\n25624;\r\n25624,32;\r\n",
+          "device_total_us": 352.753
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "6005,32;\r\n;\r\n2851;\r\n2851,32;\r\n",
+          "device_total_us": 45.95925
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "6005,32;\r\n;\r\n25624;\r\n25624,32;\r\n",
+          "device_total_us": 351.433
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "6005,32;\r\n;\r\n2851;\r\n2851,32;\r\n",
+          "device_total_us": 46.75925
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "6005,32;\r\n6005,1",
+          "device_total_us": 12.29975
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "6005,32;\r\n6005,1",
+          "device_total_us": 8.57975
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "6005,32;\r\n6005,1",
+          "device_total_us": 8.65975
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "6005,32;\r\n6005,1",
+          "device_total_us": 8.61975
+        }
+      ],
+      "full_by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 4,
+          "duration_us": 796.905,
+          "full_model_ratio": 0.3225594276295977
+        },
+        {
+          "type": "Index",
+          "count": 6,
+          "duration_us": 509.908,
+          "full_model_ratio": 0.20639302379048055
+        },
+        {
+          "type": "ScatterElementsV2",
+          "count": 2,
+          "duration_us": 471.47,
+          "full_model_ratio": 0.19083465826482007
+        },
+        {
+          "type": "ScatterAddWithSorted",
+          "count": 2,
+          "duration_us": 203.57600000000002,
+          "full_model_ratio": 0.08240048442301527
+        },
+        {
+          "type": "MatMulV2",
+          "count": 9,
+          "duration_us": 52.419999999999995,
+          "full_model_ratio": 0.021217792831446043
+        },
+        {
+          "type": "GatherV3",
+          "count": 2,
+          "duration_us": 50.019,
+          "full_model_ratio": 0.02024595153826974
+        },
+        {
+          "type": "Slice",
+          "count": 10,
+          "duration_us": 49.67999999999999,
+          "full_model_ratio": 0.020108736128695907
+        },
+        {
+          "type": "ZerosLike",
+          "count": 8,
+          "duration_us": 49.22,
+          "full_model_ratio": 0.019922544127504282
+        },
+        {
+          "type": "Sort",
+          "count": 2,
+          "duration_us": 44.298,
+          "full_model_ratio": 0.017930289714753852
+        },
+        {
+          "type": "MemSet",
+          "count": 4,
+          "duration_us": 42.218,
+          "full_model_ratio": 0.017088378057191708
+        },
+        {
+          "type": "Mul",
+          "count": 4,
+          "duration_us": 38.159000000000006,
+          "full_model_ratio": 0.015445436029285574
+        },
+        {
+          "type": "ConcatD",
+          "count": 4,
+          "duration_us": 32.559999999999995,
+          "full_model_ratio": 0.013179155562607462
+        },
+        {
+          "type": "LinearIndex",
+          "count": 4,
+          "duration_us": 27.518,
+          "full_model_ratio": 0.01113832932345922
+        },
+        {
+          "type": "Add",
+          "count": 4,
+          "duration_us": 24.059,
+          "full_model_ratio": 0.009738246427542167
+        },
+        {
+          "type": "BroadcastTo",
+          "count": 2,
+          "duration_us": 16.979,
+          "full_model_ratio": 0.006872508670071011
+        },
+        {
+          "type": "RealDiv",
+          "count": 2,
+          "duration_us": 16.86,
+          "full_model_ratio": 0.006824341608893177
+        },
+        {
+          "type": "LogSoftmaxV2",
+          "count": 1,
+          "duration_us": 16.14,
+          "full_model_ratio": 0.00653291065050628
+        },
+        {
+          "type": "Relu",
+          "count": 2,
+          "duration_us": 15.259,
+          "full_model_ratio": 0.006176312491702312
+        },
+        {
+          "type": "Fill",
+          "count": 2,
+          "duration_us": 6.86,
+          "full_model_ratio": 0.0027766894090751598
+        },
+        {
+          "type": "ClipByValueV2",
+          "count": 2,
+          "duration_us": 6.46,
+          "full_model_ratio": 0.002614783321082439
+        }
+      ],
+      "one_stage_component_kernel_us": 1688.6249999999998,
+      "component_by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 4,
+          "duration_us": 1101.7379999999998,
+          "full_model_ratio": 0.6524468132356207
+        },
+        {
+          "type": "Index",
+          "count": 4,
+          "duration_us": 480.329,
+          "full_model_ratio": 0.28444977422459106
+        },
+        {
+          "type": "Mul",
+          "count": 4,
+          "duration_us": 39.799,
+          "full_model_ratio": 0.023568880005921982
+        },
+        {
+          "type": "ZerosLike",
+          "count": 4,
+          "duration_us": 31.579,
+          "full_model_ratio": 0.018701014138722338
+        },
+        {
+          "type": "Slice",
+          "count": 4,
+          "duration_us": 23.54,
+          "full_model_ratio": 0.013940336072248132
+        },
+        {
+          "type": "ConcatD",
+          "count": 1,
+          "duration_us": 11.64,
+          "full_model_ratio": 0.006893182322895848
+        }
+      ]
+    },
+    {
+      "copies": 4,
+      "nodes": 24020,
+      "positive_edges": 102496,
+      "negative_edges": 11404,
+      "full_model_kernel_us": 8067.759,
+      "conservative_stage_kernel_us": 4654.98675,
+      "conservative_stage_hotspot_pct": 57.698634156027715,
+      "exact_stage_framework_ops": [
+        {
+          "name": "aten::index",
+          "input_shapes": "24020,32;\r\n",
+          "device_total_us": 671.7465
+        },
+        {
+          "name": "aten::index",
+          "input_shapes": "24020,32;\r\n",
+          "device_total_us": 95.33800000000001
+        },
+        {
+          "name": "aten::index",
+          "input_shapes": "24020,32;\r\n",
+          "device_total_us": 669.7865
+        },
+        {
+          "name": "aten::index",
+          "input_shapes": "24020,32;\r\n",
+          "device_total_us": 92.51825
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "24020,32;\r\n;\r\n102496;\r\n102496,32;\r\n",
+          "device_total_us": 1384.97225
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "24020,32;\r\n;\r\n11404;\r\n11404,32;\r\n",
+          "device_total_us": 160.07675
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "24020,32;\r\n;\r\n102496;\r\n102496,32;\r\n",
+          "device_total_us": 1376.9525
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "24020,32;\r\n;\r\n11404;\r\n11404,32;\r\n",
+          "device_total_us": 160.09675
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "24020,32;\r\n24020,1",
+          "device_total_us": 14.17975
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "24020,32;\r\n24020,1",
+          "device_total_us": 9.77975
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "24020,32;\r\n24020,1",
+          "device_total_us": 10.38
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "24020,32;\r\n24020,1",
+          "device_total_us": 9.15975
+        }
+      ],
+      "full_by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 4,
+          "duration_us": 3082.097,
+          "full_model_ratio": 0.38202640906849106
+        },
+        {
+          "type": "Index",
+          "count": 6,
+          "duration_us": 1857.203,
+          "full_model_ratio": 0.23020060465365907
+        },
+        {
+          "type": "ScatterElementsV2",
+          "count": 2,
+          "duration_us": 1639.9279999999999,
+          "full_model_ratio": 0.20326933414842954
+        },
+        {
+          "type": "ScatterAddWithSorted",
+          "count": 2,
+          "duration_us": 670.6859999999999,
+          "full_model_ratio": 0.08313163543928369
+        },
+        {
+          "type": "Sort",
+          "count": 2,
+          "duration_us": 166.857,
+          "full_model_ratio": 0.020681951456408155
+        },
+        {
+          "type": "Slice",
+          "count": 10,
+          "duration_us": 109.137,
+          "full_model_ratio": 0.013527548356365132
+        },
+        {
+          "type": "GatherV3",
+          "count": 2,
+          "duration_us": 83.917,
+          "full_model_ratio": 0.010401525380220208
+        },
+        {
+          "type": "MatMulV2",
+          "count": 8,
+          "duration_us": 78.42,
+          "full_model_ratio": 0.009720171363571966
+        },
+        {
+          "type": "ZerosLike",
+          "count": 8,
+          "duration_us": 49.579,
+          "full_model_ratio": 0.006145324866545964
+        },
+        {
+          "type": "ConcatD",
+          "count": 4,
+          "duration_us": 48.598,
+          "full_model_ratio": 0.006023729761883071
+        },
+        {
+          "type": "MemSet",
+          "count": 4,
+          "duration_us": 47.339000000000006,
+          "full_model_ratio": 0.005867676513391142
+        },
+        {
+          "type": "Mul",
+          "count": 4,
+          "duration_us": 43.5,
+          "full_model_ratio": 0.005391831858140532
+        },
+        {
+          "type": "LinearIndex",
+          "count": 4,
+          "duration_us": 30.459999999999997,
+          "full_model_ratio": 0.003775521802274956
+        },
+        {
+          "type": "MatMulV3",
+          "count": 1,
+          "duration_us": 28.599,
+          "full_model_ratio": 0.003544850558872668
+        },
+        {
+          "type": "Add",
+          "count": 4,
+          "duration_us": 27.98,
+          "full_model_ratio": 0.0034681254112821167
+        },
+        {
+          "type": "BroadcastTo",
+          "count": 2,
+          "duration_us": 20.759999999999998,
+          "full_model_ratio": 0.002573205272988447
+        },
+        {
+          "type": "RealDiv",
+          "count": 2,
+          "duration_us": 20.579,
+          "full_model_ratio": 0.0025507702944522763
+        },
+        {
+          "type": "LogSoftmaxV2",
+          "count": 1,
+          "duration_us": 18.08,
+          "full_model_ratio": 0.0022410188504639267
+        },
+        {
+          "type": "Relu",
+          "count": 2,
+          "duration_us": 17.98,
+          "full_model_ratio": 0.0022286238346980866
+        },
+        {
+          "type": "ClipByValueV2",
+          "count": 2,
+          "duration_us": 16.1,
+          "full_model_ratio": 0.001995597538300289
+        },
+        {
+          "type": "Fill",
+          "count": 2,
+          "duration_us": 9.96,
+          "full_model_ratio": 0.0012345435702776943
+        }
+      ],
+      "one_stage_component_kernel_us": 4949.9619999999995,
+      "component_by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 4,
+          "duration_us": 3147.777,
+          "full_model_ratio": 0.6359194272602497
+        },
+        {
+          "type": "Index",
+          "count": 4,
+          "duration_us": 1659.527,
+          "full_model_ratio": 0.3352605535153604
+        },
+        {
+          "type": "Slice",
+          "count": 4,
+          "duration_us": 61.218999999999994,
+          "full_model_ratio": 0.012367569690433988
+        },
+        {
+          "type": "Mul",
+          "count": 4,
+          "duration_us": 43.498999999999995,
+          "full_model_ratio": 0.008787744229147618
+        },
+        {
+          "type": "ZerosLike",
+          "count": 4,
+          "duration_us": 21.7,
+          "full_model_ratio": 0.004383872037805543
+        },
+        {
+          "type": "ConcatD",
+          "count": 1,
+          "duration_us": 16.24,
+          "full_model_ratio": 0.0032808332670028577
+        }
+      ]
+    },
+    {
+      "copies": 16,
+      "nodes": 96080,
+      "positive_edges": 409984,
+      "negative_edges": 45616,
+      "full_model_kernel_us": 30438.152,
+      "conservative_stage_kernel_us": 18492.4505,
+      "conservative_stage_hotspot_pct": 60.75418277693074,
+      "exact_stage_framework_ops": [
+        {
+          "name": "aten::index",
+          "input_shapes": "96080,32;\r\n",
+          "device_total_us": 2805.024
+        },
+        {
+          "name": "aten::index",
+          "input_shapes": "96080,32;\r\n",
+          "device_total_us": 332.47325
+        },
+        {
+          "name": "aten::index",
+          "input_shapes": "96080,32;\r\n",
+          "device_total_us": 2804.664
+        },
+        {
+          "name": "aten::index",
+          "input_shapes": "96080,32;\r\n",
+          "device_total_us": 327.0335
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "96080,32;\r\n;\r\n409984;\r\n409984,32;\r\n",
+          "device_total_us": 5464.65075
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "96080,32;\r\n;\r\n45616;\r\n45616,32;\r\n",
+          "device_total_us": 612.28775
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "96080,32;\r\n;\r\n409984;\r\n409984,32;\r\n",
+          "device_total_us": 5462.87075
+        },
+        {
+          "name": "aten::index_add_",
+          "input_shapes": "96080,32;\r\n;\r\n45616;\r\n45616,32;\r\n",
+          "device_total_us": 612.08775
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "96080,32;\r\n96080,1",
+          "device_total_us": 21.4395
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "96080,32;\r\n96080,1",
+          "device_total_us": 16.49975
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "96080,32;\r\n96080,1",
+          "device_total_us": 18.01975
+        },
+        {
+          "name": "aten::mul",
+          "input_shapes": "96080,32;\r\n96080,1",
+          "device_total_us": 15.39975
+        }
+      ],
+      "full_by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 4,
+          "duration_us": 12151.898000000001,
+          "full_model_ratio": 0.3992324501172082
+        },
+        {
+          "type": "Index",
+          "count": 6,
+          "duration_us": 7790.844,
+          "full_model_ratio": 0.2559565377030774
+        },
+        {
+          "type": "ScatterElementsV2",
+          "count": 2,
+          "duration_us": 6397.132,
+          "full_model_ratio": 0.21016821257742585
+        },
+        {
+          "type": "ScatterAddWithSorted",
+          "count": 2,
+          "duration_us": 2209.916,
+          "full_model_ratio": 0.07260348788586114
+        },
+        {
+          "type": "Sort",
+          "count": 2,
+          "duration_us": 680.5250000000001,
+          "full_model_ratio": 0.02235763196136218
+        },
+        {
+          "type": "GatherV3",
+          "count": 2,
+          "duration_us": 292.374,
+          "full_model_ratio": 0.00960551087332766
+        },
+        {
+          "type": "Slice",
+          "count": 10,
+          "duration_us": 153.478,
+          "full_model_ratio": 0.005042290346667564
+        },
+        {
+          "type": "MatMulV2",
+          "count": 8,
+          "duration_us": 125.57700000000001,
+          "full_model_ratio": 0.004125644684342204
+        },
+        {
+          "type": "ConcatD",
+          "count": 4,
+          "duration_us": 106.51799999999999,
+          "full_model_ratio": 0.0034994897193495844
+        },
+        {
+          "type": "ZerosLike",
+          "count": 8,
+          "duration_us": 82.578,
+          "full_model_ratio": 0.002712976793072063
+        },
+        {
+          "type": "Mul",
+          "count": 4,
+          "duration_us": 71.358,
+          "full_model_ratio": 0.0023443604592026483
+        },
+        {
+          "type": "MatMulV3",
+          "count": 1,
+          "duration_us": 67.859,
+          "full_model_ratio": 0.002229406042784726
+        },
+        {
+          "type": "MemSet",
+          "count": 4,
+          "duration_us": 51.419,
+          "full_model_ratio": 0.0016892944092006636
+        },
+        {
+          "type": "Add",
+          "count": 4,
+          "duration_us": 46.399,
+          "full_model_ratio": 0.0015243698106245085
+        },
+        {
+          "type": "RealDiv",
+          "count": 2,
+          "duration_us": 40.559,
+          "full_model_ratio": 0.0013325053373805349
+        },
+        {
+          "type": "BroadcastTo",
+          "count": 2,
+          "duration_us": 35.34,
+          "full_model_ratio": 0.0011610428911715798
+        },
+        {
+          "type": "LinearIndex",
+          "count": 4,
+          "duration_us": 34.46,
+          "full_model_ratio": 0.0011321318061622138
+        },
+        {
+          "type": "Relu",
+          "count": 2,
+          "duration_us": 33.78,
+          "full_model_ratio": 0.0011097914222913403
+        },
+        {
+          "type": "LogSoftmaxV2",
+          "count": 1,
+          "duration_us": 25.799,
+          "full_model_ratio": 0.0008475875933598072
+        },
+        {
+          "type": "ClipByValueV2",
+          "count": 2,
+          "duration_us": 25.240000000000002,
+          "full_model_ratio": 0.0008292224836777214
+        },
+        {
+          "type": "Fill",
+          "count": 2,
+          "duration_us": 15.099,
+          "full_model_ratio": 0.000496055082450472
+        }
+      ],
+      "one_stage_component_kernel_us": 18805.204999999998,
+      "component_by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 4,
+          "duration_us": 12192.276,
+          "full_model_ratio": 0.6483458170224681
+        },
+        {
+          "type": "Index",
+          "count": 4,
+          "duration_us": 6355.812999999999,
+          "full_model_ratio": 0.3379815854174416
+        },
+        {
+          "type": "Slice",
+          "count": 4,
+          "duration_us": 111.958,
+          "full_model_ratio": 0.005953564451969548
+        },
+        {
+          "type": "Mul",
+          "count": 4,
+          "duration_us": 70.458,
+          "full_model_ratio": 0.0037467286317804036
+        },
+        {
+          "type": "ZerosLike",
+          "count": 4,
+          "duration_us": 39.559999999999995,
+          "full_model_ratio": 0.002103672892691146
+        },
+        {
+          "type": "ConcatD",
+          "count": 1,
+          "duration_us": 35.14,
+          "full_model_ratio": 0.0018686315836493144
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,342 @@
+{
+  "model": "maintained PyG examples/film.py PPI topology",
+  "dataset": "PPI deterministic two-graph training batch",
+  "profiled_baseline": "strong exact resident NPU baseline",
+  "results": [
+    {
+      "copies": 1,
+      "graphs": 2,
+      "nodes": 3144,
+      "edges": 62022,
+      "full_model": {
+        "kernel_count": 101,
+        "kernel_us": 11386.573,
+        "by_type": [
+          {
+            "type": "Index",
+            "count": 12,
+            "duration_us": 5986.240000000001
+          },
+          {
+            "type": "InplaceIndexAdd",
+            "count": 4,
+            "duration_us": 3775.466
+          },
+          {
+            "type": "Mul",
+            "count": 12,
+            "duration_us": 402.43
+          },
+          {
+            "type": "MatMulV2",
+            "count": 16,
+            "duration_us": 379.5110000000001
+          },
+          {
+            "type": "Add",
+            "count": 12,
+            "duration_us": 360.734
+          },
+          {
+            "type": "Slice",
+            "count": 16,
+            "duration_us": 137.398
+          },
+          {
+            "type": "Relu",
+            "count": 6,
+            "duration_us": 122.21799999999999
+          },
+          {
+            "type": "MemSet",
+            "count": 12,
+            "duration_us": 113.197
+          },
+          {
+            "type": "BNInfer",
+            "count": 3,
+            "duration_us": 48.49999999999999
+          },
+          {
+            "type": "ZerosLike",
+            "count": 4,
+            "duration_us": 32.899
+          },
+          {
+            "type": "Cast",
+            "count": 4,
+            "duration_us": 27.98
+          }
+        ]
+      },
+      "replaceable_stage": {
+        "kernel_count": 10,
+        "kernel_us": 2687.687,
+        "by_type": [
+          {
+            "type": "Index",
+            "count": 3,
+            "duration_us": 1552.409
+          },
+          {
+            "type": "InplaceIndexAdd",
+            "count": 1,
+            "duration_us": 891.242
+          },
+          {
+            "type": "Mul",
+            "count": 2,
+            "duration_us": 111.798
+          },
+          {
+            "type": "Add",
+            "count": 1,
+            "duration_us": 84.319
+          },
+          {
+            "type": "Relu",
+            "count": 1,
+            "duration_us": 34.659
+          },
+          {
+            "type": "ZerosLike",
+            "count": 1,
+            "duration_us": 7.36
+          },
+          {
+            "type": "Cast",
+            "count": 1,
+            "duration_us": 5.9
+          }
+        ]
+      },
+      "stage_hotspot_pct": 23.60400271442514,
+      "attribution": "isolated exact first-layer native FiLM modulation and mean divided by exact resident full-model NPU kernel time"
+    },
+    {
+      "copies": 2,
+      "graphs": 4,
+      "nodes": 6288,
+      "edges": 124044,
+      "full_model": {
+        "kernel_count": 101,
+        "kernel_us": 25387.152,
+        "by_type": [
+          {
+            "type": "Index",
+            "count": 12,
+            "duration_us": 12140.818
+          },
+          {
+            "type": "InplaceIndexAdd",
+            "count": 4,
+            "duration_us": 8515.389
+          },
+          {
+            "type": "Mul",
+            "count": 12,
+            "duration_us": 1507.29
+          },
+          {
+            "type": "Add",
+            "count": 12,
+            "duration_us": 1474.7510000000002
+          },
+          {
+            "type": "Relu",
+            "count": 6,
+            "duration_us": 715.865
+          },
+          {
+            "type": "MatMulV2",
+            "count": 16,
+            "duration_us": 587.3860000000002
+          },
+          {
+            "type": "Slice",
+            "count": 16,
+            "duration_us": 179.75700000000003
+          },
+          {
+            "type": "MemSet",
+            "count": 12,
+            "duration_us": 134.438
+          },
+          {
+            "type": "BNInfer",
+            "count": 3,
+            "duration_us": 69.119
+          },
+          {
+            "type": "ZerosLike",
+            "count": 4,
+            "duration_us": 35.199999999999996
+          },
+          {
+            "type": "Cast",
+            "count": 4,
+            "duration_us": 27.139000000000003
+          }
+        ]
+      },
+      "replaceable_stage": {
+        "kernel_count": 10,
+        "kernel_us": 6165.275999999999,
+        "by_type": [
+          {
+            "type": "Index",
+            "count": 3,
+            "duration_us": 2900.2619999999997
+          },
+          {
+            "type": "InplaceIndexAdd",
+            "count": 1,
+            "duration_us": 2112.658
+          },
+          {
+            "type": "Mul",
+            "count": 2,
+            "duration_us": 464.98999999999995
+          },
+          {
+            "type": "Add",
+            "count": 1,
+            "duration_us": 442.932
+          },
+          {
+            "type": "Relu",
+            "count": 1,
+            "duration_us": 229.295
+          },
+          {
+            "type": "ZerosLike",
+            "count": 1,
+            "duration_us": 8.22
+          },
+          {
+            "type": "Cast",
+            "count": 1,
+            "duration_us": 6.919
+          }
+        ]
+      },
+      "stage_hotspot_pct": 24.285024172857195,
+      "attribution": "isolated exact first-layer native FiLM modulation and mean divided by exact resident full-model NPU kernel time"
+    },
+    {
+      "copies": 4,
+      "graphs": 8,
+      "nodes": 12576,
+      "edges": 248088,
+      "full_model": {
+        "kernel_count": 98,
+        "kernel_us": 51567.749,
+        "by_type": [
+          {
+            "type": "Index",
+            "count": 12,
+            "duration_us": 24456.871000000003
+          },
+          {
+            "type": "InplaceIndexAdd",
+            "count": 4,
+            "duration_us": 17954.502
+          },
+          {
+            "type": "Mul",
+            "count": 12,
+            "duration_us": 3128.4359999999997
+          },
+          {
+            "type": "Add",
+            "count": 12,
+            "duration_us": 3119.017
+          },
+          {
+            "type": "Relu",
+            "count": 6,
+            "duration_us": 1466.77
+          },
+          {
+            "type": "MatMulV2",
+            "count": 12,
+            "duration_us": 694.3270000000001
+          },
+          {
+            "type": "Slice",
+            "count": 16,
+            "duration_us": 242.35699999999997
+          },
+          {
+            "type": "MatMulV3",
+            "count": 4,
+            "duration_us": 198.055
+          },
+          {
+            "type": "MemSet",
+            "count": 9,
+            "duration_us": 125.67699999999999
+          },
+          {
+            "type": "BNInfer",
+            "count": 3,
+            "duration_us": 106.93800000000002
+          },
+          {
+            "type": "ZerosLike",
+            "count": 4,
+            "duration_us": 41.559999999999995
+          },
+          {
+            "type": "Cast",
+            "count": 4,
+            "duration_us": 33.239
+          }
+        ]
+      },
+      "replaceable_stage": {
+        "kernel_count": 10,
+        "kernel_us": 12233.035,
+        "by_type": [
+          {
+            "type": "Index",
+            "count": 3,
+            "duration_us": 5533.9890000000005
+          },
+          {
+            "type": "InplaceIndexAdd",
+            "count": 1,
+            "duration_us": 4399.372
+          },
+          {
+            "type": "Mul",
+            "count": 2,
+            "duration_us": 913.4010000000001
+          },
+          {
+            "type": "Add",
+            "count": 1,
+            "duration_us": 888.762
+          },
+          {
+            "type": "Relu",
+            "count": 1,
+            "duration_us": 477.831
+          },
+          {
+            "type": "ZerosLike",
+            "count": 1,
+            "duration_us": 11.52
+          },
+          {
+            "type": "Cast",
+            "count": 1,
+            "duration_us": 8.16
+          }
+        ]
+      },
+      "stage_hotspot_pct": 23.722259042177697,
+      "attribution": "isolated exact first-layer native FiLM modulation and mean divided by exact resident full-model NPU kernel time"
+    }
+  ]
+}

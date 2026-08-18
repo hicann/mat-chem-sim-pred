@@ -1,0 +1,187 @@
+{
+  "model": "maintained PyG LightGCN K=2 recommendation inference",
+  "profiled_baseline": "exact resident NPU model with pair scoring",
+  "dataset": "MovieLens 100K u1 split",
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2625,
+      "edges": 160000,
+      "pairs": 40000,
+      "replaceable_calls": 1,
+      "attribution_note": "Only propagation-exclusive index-add/zero kernels are counted; shared Index/Mul types are excluded because pair scoring uses them.",
+      "kernel_count": 15,
+      "full_model_kernel_us": 7004.66,
+      "conservative_stage_kernel_us": 4326.192999999999,
+      "conservative_stage_hotspot_pct": 61.7616415357776,
+      "stage_kernel_types": [
+        "InplaceIndexAdd",
+        "ZerosLike"
+      ],
+      "by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 2,
+          "duration_us": 4312.373,
+          "full_model_ratio": 0.6156434430793214
+        },
+        {
+          "type": "Index",
+          "count": 4,
+          "duration_us": 2566.168,
+          "full_model_ratio": 0.3663515431155831
+        },
+        {
+          "type": "Mul",
+          "count": 3,
+          "duration_us": 80.139,
+          "full_model_ratio": 0.0114408122592674
+        },
+        {
+          "type": "ReduceSum",
+          "count": 1,
+          "duration_us": 15.66,
+          "full_model_ratio": 0.0022356545499710194
+        },
+        {
+          "type": "ZerosLike",
+          "count": 2,
+          "duration_us": 13.82,
+          "full_model_ratio": 0.001972972278454629
+        },
+        {
+          "type": "Add",
+          "count": 2,
+          "duration_us": 10.940000000000001,
+          "full_model_ratio": 0.001561817418689844
+        },
+        {
+          "type": "RealDiv",
+          "count": 1,
+          "duration_us": 5.56,
+          "full_model_ratio": 0.0007937572987125714
+        }
+      ]
+    },
+    {
+      "copies": 2,
+      "nodes": 5250,
+      "edges": 320000,
+      "pairs": 80000,
+      "replaceable_calls": 1,
+      "attribution_note": "Only propagation-exclusive index-add/zero kernels are counted; shared Index/Mul types are excluded because pair scoring uses them.",
+      "kernel_count": 15,
+      "full_model_kernel_us": 13852.642000000002,
+      "conservative_stage_kernel_us": 8608.667000000001,
+      "conservative_stage_hotspot_pct": 62.14458584867783,
+      "stage_kernel_types": [
+        "InplaceIndexAdd",
+        "ZerosLike"
+      ],
+      "by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 2,
+          "duration_us": 8594.609,
+          "full_model_ratio": 0.6204310340222464
+        },
+        {
+          "type": "Index",
+          "count": 4,
+          "duration_us": 5057.18,
+          "full_model_ratio": 0.36506971016792317
+        },
+        {
+          "type": "Mul",
+          "count": 3,
+          "duration_us": 145.657,
+          "full_model_ratio": 0.010514745129485047
+        },
+        {
+          "type": "ReduceSum",
+          "count": 1,
+          "duration_us": 21.759,
+          "full_model_ratio": 0.001570747298601956
+        },
+        {
+          "type": "ZerosLike",
+          "count": 2,
+          "duration_us": 14.058,
+          "full_model_ratio": 0.0010148244645317476
+        },
+        {
+          "type": "Add",
+          "count": 2,
+          "duration_us": 13.599,
+          "full_model_ratio": 0.0009816899909778941
+        },
+        {
+          "type": "RealDiv",
+          "count": 1,
+          "duration_us": 5.78,
+          "full_model_ratio": 0.0004172489262337105
+        }
+      ]
+    },
+    {
+      "copies": 4,
+      "nodes": 10500,
+      "edges": 640000,
+      "pairs": 160000,
+      "replaceable_calls": 1,
+      "attribution_note": "Only propagation-exclusive index-add/zero kernels are counted; shared Index/Mul types are excluded because pair scoring uses them.",
+      "kernel_count": 15,
+      "full_model_kernel_us": 29287.914999999997,
+      "conservative_stage_kernel_us": 18953.341,
+      "conservative_stage_hotspot_pct": 64.71386235585565,
+      "stage_kernel_types": [
+        "InplaceIndexAdd",
+        "ZerosLike"
+      ],
+      "by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 2,
+          "duration_us": 18942.481,
+          "full_model_ratio": 0.6467678221546328
+        },
+        {
+          "type": "Index",
+          "count": 4,
+          "duration_us": 9962.142,
+          "full_model_ratio": 0.3401451417760534
+        },
+        {
+          "type": "Mul",
+          "count": 3,
+          "duration_us": 308.653,
+          "full_model_ratio": 0.01053857879606657
+        },
+        {
+          "type": "ReduceSum",
+          "count": 1,
+          "duration_us": 35.259,
+          "full_model_ratio": 0.0012038753868276388
+        },
+        {
+          "type": "Add",
+          "count": 2,
+          "duration_us": 20.72,
+          "full_model_ratio": 0.0007074590321639489
+        },
+        {
+          "type": "ZerosLike",
+          "count": 2,
+          "duration_us": 10.86,
+          "full_model_ratio": 0.0003708014039237686
+        },
+        {
+          "type": "RealDiv",
+          "count": 1,
+          "duration_us": 7.8,
+          "full_model_ratio": 0.00026632145033198847
+        }
+      ]
+    }
+  ]
+}
