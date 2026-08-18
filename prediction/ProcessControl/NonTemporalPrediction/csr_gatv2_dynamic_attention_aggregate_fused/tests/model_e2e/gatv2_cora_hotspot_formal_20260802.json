@@ -1,0 +1,317 @@
+{
+  "candidate": "gatv2",
+  "model": "complete two-layer maintained PyG model",
+  "profiled_baseline": "exact resident padded NPU implementation",
+  "dataset": "Cora",
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges": 13264,
+      "replaceable_calls": 2,
+      "kernel_count": 42,
+      "full_model_kernel_us": 32962.541000000005,
+      "conservative_stage_kernel_us": 32722.167999999998,
+      "conservative_stage_hotspot_pct": 99.27076920435228,
+      "stage_kernel_types": [
+        "Index",
+        "LeakyRelu",
+        "MaskedFill",
+        "Mul",
+        "ReduceSum",
+        "Softmax",
+        "SoftmaxV2"
+      ],
+      "by_type": [
+        {
+          "type": "Index",
+          "count": 8,
+          "duration_us": 32093.48,
+          "full_model_ratio": 0.9736348905868633
+        },
+        {
+          "type": "ReduceSum",
+          "count": 4,
+          "duration_us": 231.436,
+          "full_model_ratio": 0.007021182013850206
+        },
+        {
+          "type": "Mul",
+          "count": 4,
+          "duration_us": 168.91699999999997,
+          "full_model_ratio": 0.005124513914142722
+        },
+        {
+          "type": "MaskedFill",
+          "count": 4,
+          "duration_us": 137.356,
+          "full_model_ratio": 0.004167033117986868
+        },
+        {
+          "type": "MatMulV2",
+          "count": 4,
+          "duration_us": 116.738,
+          "full_model_ratio": 0.0035415352232705598
+        },
+        {
+          "type": "SoftmaxV2",
+          "count": 2,
+          "duration_us": 77.719,
+          "full_model_ratio": 0.002357797598188804
+        },
+        {
+          "type": "TensorMove",
+          "count": 4,
+          "duration_us": 45.119,
+          "full_model_ratio": 0.001368796173814391
+        },
+        {
+          "type": "Add",
+          "count": 4,
+          "duration_us": 36.297,
+          "full_model_ratio": 0.0011011590398931925
+        },
+        {
+          "type": "LogicalNot",
+          "count": 4,
+          "duration_us": 27.939,
+          "full_model_ratio": 0.0008475984906624764
+        },
+        {
+          "type": "LeakyRelu",
+          "count": 2,
+          "duration_us": 13.26,
+          "full_model_ratio": 0.0004022748124909423
+        },
+        {
+          "type": "ReduceMean",
+          "count": 1,
+          "duration_us": 8.12,
+          "full_model_ratio": 0.0002463402320834428
+        },
+        {
+          "type": "Elu",
+          "count": 1,
+          "duration_us": 6.16,
+          "full_model_ratio": 0.0001868787967529566
+        },
+        {
+          "type": "Softmax",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges": 53056,
+      "replaceable_calls": 2,
+      "kernel_count": 42,
+      "full_model_kernel_us": 259934.506,
+      "conservative_stage_kernel_us": 259449.855,
+      "conservative_stage_hotspot_pct": 99.81354880217404,
+      "stage_kernel_types": [
+        "Index",
+        "LeakyRelu",
+        "MaskedFill",
+        "Mul",
+        "ReduceSum",
+        "Softmax",
+        "SoftmaxV2"
+      ],
+      "by_type": [
+        {
+          "type": "Index",
+          "count": 8,
+          "duration_us": 257347.217,
+          "full_model_ratio": 0.9900463811449489
+        },
+        {
+          "type": "Mul",
+          "count": 4,
+          "duration_us": 844.0829999999999,
+          "full_model_ratio": 0.0032472910695434945
+        },
+        {
+          "type": "ReduceSum",
+          "count": 4,
+          "duration_us": 623.207,
+          "full_model_ratio": 0.002397553943838453
+        },
+        {
+          "type": "MaskedFill",
+          "count": 4,
+          "duration_us": 394.193,
+          "full_model_ratio": 0.0015165089316768125
+        },
+        {
+          "type": "MatMulV2",
+          "count": 2,
+          "duration_us": 258.53499999999997,
+          "full_model_ratio": 0.0009946159283677404
+        },
+        {
+          "type": "SoftmaxV2",
+          "count": 2,
+          "duration_us": 225.815,
+          "full_model_ratio": 0.000868738065888028
+        },
+        {
+          "type": "TensorMove",
+          "count": 4,
+          "duration_us": 94.577,
+          "full_model_ratio": 0.00036384934595793913
+        },
+        {
+          "type": "Add",
+          "count": 4,
+          "duration_us": 43.46,
+          "full_model_ratio": 0.00016719596281687975
+        },
+        {
+          "type": "MatMulV3",
+          "count": 2,
+          "duration_us": 38.559,
+          "full_model_ratio": 0.0001483412133054778
+        },
+        {
+          "type": "LogicalNot",
+          "count": 4,
+          "duration_us": 31.900000000000006,
+          "full_model_ratio": 0.00012272322167184685
+        },
+        {
+          "type": "LeakyRelu",
+          "count": 2,
+          "duration_us": 15.34,
+          "full_model_ratio": 5.9014865844706284e-05
+        },
+        {
+          "type": "Elu",
+          "count": 1,
+          "duration_us": 9.22,
+          "full_model_ratio": 3.547047347380652e-05
+        },
+        {
+          "type": "ReduceMean",
+          "count": 1,
+          "duration_us": 8.4,
+          "full_model_ratio": 3.231583266594086e-05
+        },
+        {
+          "type": "Softmax",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "copies": 8,
+      "nodes": 21664,
+      "edges": 106112,
+      "replaceable_calls": 2,
+      "kernel_count": 42,
+      "full_model_kernel_us": 472787.3530000001,
+      "conservative_stage_kernel_us": 471846.773,
+      "conservative_stage_hotspot_pct": 99.80105643815727,
+      "stage_kernel_types": [
+        "Index",
+        "LeakyRelu",
+        "MaskedFill",
+        "Mul",
+        "ReduceSum",
+        "Softmax",
+        "SoftmaxV2"
+      ],
+      "by_type": [
+        {
+          "type": "Index",
+          "count": 8,
+          "duration_us": 467802.574,
+          "full_model_ratio": 0.9894566151814976
+        },
+        {
+          "type": "Mul",
+          "count": 4,
+          "duration_us": 1795.9450000000002,
+          "full_model_ratio": 0.0037986316440236922
+        },
+        {
+          "type": "ReduceSum",
+          "count": 4,
+          "duration_us": 1062.158,
+          "full_model_ratio": 0.0022465871670640895
+        },
+        {
+          "type": "MaskedFill",
+          "count": 4,
+          "duration_us": 731.206,
+          "full_model_ratio": 0.0015465853630818246
+        },
+        {
+          "type": "MatMulV2",
+          "count": 2,
+          "duration_us": 503.749,
+          "full_model_ratio": 0.0010654874687394608
+        },
+        {
+          "type": "SoftmaxV2",
+          "count": 2,
+          "duration_us": 434.411,
+          "full_model_ratio": 0.0009188295694533942
+        },
+        {
+          "type": "TensorMove",
+          "count": 4,
+          "duration_us": 271.61400000000003,
+          "full_model_ratio": 0.0005744950626883625
+        },
+        {
+          "type": "Add",
+          "count": 4,
+          "duration_us": 52.78000000000001,
+          "full_model_ratio": 0.00011163581188264145
+        },
+        {
+          "type": "MatMulV3",
+          "count": 2,
+          "duration_us": 48.498,
+          "full_model_ratio": 0.0001025788860303968
+        },
+        {
+          "type": "LogicalNot",
+          "count": 4,
+          "duration_us": 45.759,
+          "full_model_ratio": 9.67855838563431e-05
+        },
+        {
+          "type": "LeakyRelu",
+          "count": 2,
+          "duration_us": 20.479,
+          "full_model_ratio": 4.331545645215259e-05
+        },
+        {
+          "type": "Elu",
+          "count": 1,
+          "duration_us": 9.8,
+          "full_model_ratio": 2.0728134832320692e-05
+        },
+        {
+          "type": "ReduceMean",
+          "count": 1,
+          "duration_us": 8.38,
+          "full_model_ratio": 1.7724670397433406e-05
+        },
+        {
+          "type": "Softmax",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        }
+      ]
+    }
+  ]
+}
