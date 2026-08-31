@@ -1,0 +1,47 @@
+{
+  "model": "maintained PyG examples/tagcn.py two-layer TAGCN, K=3",
+  "dataset": "Cora",
+  "checkpoint_sha256": "44e91556e55250b4516a5c0f12d587b4cd7a53aa7646775c865e931f8d6c01b0",
+  "checkpoint_epochs": 100,
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges": 10556,
+      "baseline_e2e_ms": 2.3236095439642668,
+      "custom_e2e_ms": 1.3265940360724926,
+      "e2e_speedup": 1.7515603724885822,
+      "e2e_reduction_pct": 42.908048406049524,
+      "max_model_abs_error": 5.7220458984375e-06,
+      "prediction_agreement": 1.0,
+      "baseline_test_accuracy": 0.7960000038146973,
+      "custom_test_accuracy": 0.7960000038146973
+    },
+    {
+      "copies": 2,
+      "nodes": 5416,
+      "edges": 21112,
+      "baseline_e2e_ms": 4.700235556811094,
+      "custom_e2e_ms": 1.9943660590797663,
+      "e2e_speedup": 2.3567566923896917,
+      "e2e_reduction_pct": 57.568806180580935,
+      "max_model_abs_error": 3.814697265625e-06,
+      "prediction_agreement": 1.0,
+      "baseline_test_accuracy": 0.7960000038146973,
+      "custom_test_accuracy": 0.7960000038146973
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges": 42224,
+      "baseline_e2e_ms": 9.78781993035227,
+      "custom_e2e_ms": 3.696658997796476,
+      "e2e_speedup": 2.6477475840175266,
+      "e2e_reduction_pct": 62.232049382794166,
+      "max_model_abs_error": 3.814697265625e-06,
+      "prediction_agreement": 0.9999999403953552,
+      "baseline_test_accuracy": 0.7960000038146973,
+      "custom_test_accuracy": 0.7960000038146973
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "model": "maintained PyG examples/gcn2_cora.py, 64-layer GCNII",
+  "dataset": "Cora",
+  "alpha": 0.1,
+  "theta": 0.5,
+  "checkpoint_sha256": "d2e86df046b65ae0ee71b477731ca02652b2708f08677b80bbdf0bd0a5991b2a",
+  "checkpoint_epochs": 100,
+  "component": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges": 13264,
+      "channels": 64,
+      "native_ms": 0.4049789858981967,
+      "custom_ms": 0.26180793065577745,
+      "speedup": 1.5468553029841527,
+      "max_abs_error": 4.172325134277344e-07
+    },
+    {
+      "copies": 2,
+      "nodes": 5416,
+      "edges": 26528,
+      "channels": 64,
+      "native_ms": 0.6489669904112816,
+      "custom_ms": 0.3622290678322315,
+      "speedup": 1.7915928014696336,
+      "max_abs_error": 4.76837158203125e-07
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges": 53056,
+      "channels": 64,
+      "native_ms": 1.1868079891428351,
+      "custom_ms": 0.5637009162455797,
+      "speedup": 2.1053859501370673,
+      "max_abs_error": 5.364418029785156e-07
+    }
+  ],
+  "e2e": [
+    {
+      "copies": 1,
+      "layers": 64,
+      "baseline_ms": 22.459872998297215,
+      "custom_ms": 13.109109131619334,
+      "speedup": 1.713302770828547,
+      "reduction_pct": 41.633200095952475,
+      "max_abs_error": 1.1920928955078125e-06,
+      "prediction_agreement": 1.0,
+      "baseline_accuracy": 0.7919999957084656,
+      "custom_accuracy": 0.7919999957084656
+    },
+    {
+      "copies": 2,
+      "layers": 64,
+      "baseline_ms": 39.360378053970635,
+      "custom_ms": 17.927655018866062,
+      "speedup": 2.195511795187378,
+      "reduction_pct": 54.45253347342395,
+      "max_abs_error": 1.9073486328125e-06,
+      "prediction_agreement": 1.0,
+      "baseline_accuracy": 0.7919999361038208,
+      "custom_accuracy": 0.7919999361038208
+    },
+    {
+      "copies": 4,
+      "layers": 64,
+      "baseline_ms": 73.97318398579955,
+      "custom_ms": 30.334036564454436,
+      "speedup": 2.4386198595303887,
+      "reduction_pct": 58.99319871066036,
+      "max_abs_error": 1.9073486328125e-06,
+      "prediction_agreement": 0.9999999403953552,
+      "baseline_accuracy": 0.7920000553131104,
+      "custom_accuracy": 0.7920000553131104
+    }
+  ]
+}

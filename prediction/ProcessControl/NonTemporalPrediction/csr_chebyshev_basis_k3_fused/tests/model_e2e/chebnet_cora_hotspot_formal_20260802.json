@@ -1,0 +1,268 @@
+{
+  "model": "two-layer PyG ChebNet, K=3",
+  "dataset": "Cora",
+  "profiler": "torch_npu Level1 complete-model NPU kernel profile",
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges_with_laplacian_loops": 13264,
+      "kernel_count": 42,
+      "full_model_kernel_us": 1918.1010000000003,
+      "basis_kernel_us": 1687.727,
+      "basis_hotspot_pct": 87.98947500679056,
+      "basis_kernel_types": [
+        "Index",
+        "InplaceIndexAdd",
+        "Mul",
+        "Pack",
+        "Sub",
+        "ZerosLike"
+      ],
+      "by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 4,
+          "duration_us": 848.623,
+          "full_model_ratio": 0.44242873550454326
+        },
+        {
+          "type": "Index",
+          "count": 4,
+          "duration_us": 507.19,
+          "full_model_ratio": 0.26442298919608503
+        },
+        {
+          "type": "Mul",
+          "count": 6,
+          "duration_us": 179.018,
+          "full_model_ratio": 0.09333085171218823
+        },
+        {
+          "type": "MatMulV2",
+          "count": 6,
+          "duration_us": 118.37700000000001,
+          "full_model_ratio": 0.06171572821243511
+        },
+        {
+          "type": "Pack",
+          "count": 2,
+          "duration_us": 70.439,
+          "full_model_ratio": 0.03672330080637046
+        },
+        {
+          "type": "MemSet",
+          "count": 6,
+          "duration_us": 49.018,
+          "full_model_ratio": 0.025555484304528277
+        },
+        {
+          "type": "Sub",
+          "count": 2,
+          "duration_us": 48.519000000000005,
+          "full_model_ratio": 0.025295331163478877
+        },
+        {
+          "type": "Add",
+          "count": 6,
+          "duration_us": 37.019999999999996,
+          "full_model_ratio": 0.01930033924178132
+        },
+        {
+          "type": "ZerosLike",
+          "count": 4,
+          "duration_us": 33.938,
+          "full_model_ratio": 0.017693541685239723
+        },
+        {
+          "type": "LogSoftmaxV2",
+          "count": 1,
+          "duration_us": 18.259,
+          "full_model_ratio": 0.009519311026895872
+        },
+        {
+          "type": "Relu",
+          "count": 1,
+          "duration_us": 7.7,
+          "full_model_ratio": 0.004014387146453705
+        }
+      ]
+    },
+    {
+      "copies": 2,
+      "nodes": 5416,
+      "edges_with_laplacian_loops": 26528,
+      "kernel_count": 42,
+      "full_model_kernel_us": 3786.845,
+      "basis_kernel_us": 3500.191,
+      "basis_hotspot_pct": 92.43026846887052,
+      "basis_kernel_types": [
+        "Index",
+        "InplaceIndexAdd",
+        "Mul",
+        "Pack",
+        "Sub",
+        "ZerosLike"
+      ],
+      "by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 4,
+          "duration_us": 1985.0,
+          "full_model_ratio": 0.5241830600407463
+        },
+        {
+          "type": "Index",
+          "count": 4,
+          "duration_us": 1003.021,
+          "full_model_ratio": 0.2648698322746244
+        },
+        {
+          "type": "Mul",
+          "count": 6,
+          "duration_us": 321.873,
+          "full_model_ratio": 0.0849976695639774
+        },
+        {
+          "type": "MatMulV2",
+          "count": 6,
+          "duration_us": 170.016,
+          "full_model_ratio": 0.04489647714654284
+        },
+        {
+          "type": "Pack",
+          "count": 2,
+          "duration_us": 89.499,
+          "full_model_ratio": 0.023634186242109195
+        },
+        {
+          "type": "Sub",
+          "count": 2,
+          "duration_us": 52.858999999999995,
+          "full_model_ratio": 0.013958585577175723
+        },
+        {
+          "type": "MemSet",
+          "count": 6,
+          "duration_us": 51.659,
+          "full_model_ratio": 0.01364169909251633
+        },
+        {
+          "type": "ZerosLike",
+          "count": 4,
+          "duration_us": 47.93899999999999,
+          "full_model_ratio": 0.01265935099007221
+        },
+        {
+          "type": "Add",
+          "count": 6,
+          "duration_us": 38.799,
+          "full_model_ratio": 0.010245732265249833
+        },
+        {
+          "type": "LogSoftmaxV2",
+          "count": 1,
+          "duration_us": 18.04,
+          "full_model_ratio": 0.004763860152712879
+        },
+        {
+          "type": "Relu",
+          "count": 1,
+          "duration_us": 8.14,
+          "full_model_ratio": 0.0021495466542728846
+        }
+      ]
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges_with_laplacian_loops": 53056,
+      "kernel_count": 39,
+      "full_model_kernel_us": 8049.98,
+      "basis_kernel_us": 7476.110999999999,
+      "basis_hotspot_pct": 92.87117483521698,
+      "basis_kernel_types": [
+        "Index",
+        "InplaceIndexAdd",
+        "Mul",
+        "Pack",
+        "Sub",
+        "ZerosLike"
+      ],
+      "by_type": [
+        {
+          "type": "InplaceIndexAdd",
+          "count": 4,
+          "duration_us": 3870.004,
+          "full_model_ratio": 0.48074703291188303
+        },
+        {
+          "type": "Index",
+          "count": 4,
+          "duration_us": 2098.3179999999998,
+          "full_model_ratio": 0.260661268723649
+        },
+        {
+          "type": "Mul",
+          "count": 6,
+          "duration_us": 1103.2169999999999,
+          "full_model_ratio": 0.13704593054889577
+        },
+        {
+          "type": "MatMulV2",
+          "count": 3,
+          "duration_us": 417.491,
+          "full_model_ratio": 0.051862364875440686
+        },
+        {
+          "type": "Pack",
+          "count": 2,
+          "duration_us": 254.955,
+          "full_model_ratio": 0.03167150725840313
+        },
+        {
+          "type": "Sub",
+          "count": 2,
+          "duration_us": 90.438,
+          "full_model_ratio": 0.011234562073446147
+        },
+        {
+          "type": "ZerosLike",
+          "count": 4,
+          "duration_us": 59.179,
+          "full_model_ratio": 0.007351446835892761
+        },
+        {
+          "type": "MatMulV3",
+          "count": 3,
+          "duration_us": 58.599,
+          "full_model_ratio": 0.007279396967445882
+        },
+        {
+          "type": "Add",
+          "count": 6,
+          "duration_us": 45.639,
+          "full_model_ratio": 0.005669455079391502
+        },
+        {
+          "type": "MemSet",
+          "count": 3,
+          "duration_us": 26.200000000000003,
+          "full_model_ratio": 0.0032546664712210472
+        },
+        {
+          "type": "LogSoftmaxV2",
+          "count": 1,
+          "duration_us": 17.78,
+          "full_model_ratio": 0.0022087011396301607
+        },
+        {
+          "type": "Relu",
+          "count": 1,
+          "duration_us": 8.16,
+          "full_model_ratio": 0.001013667114700906
+        }
+      ]
+    }
+  ]
+}

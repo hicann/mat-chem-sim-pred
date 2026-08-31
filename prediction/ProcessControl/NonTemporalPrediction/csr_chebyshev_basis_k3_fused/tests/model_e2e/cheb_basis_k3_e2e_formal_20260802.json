@@ -1,0 +1,47 @@
+{
+  "model": "two-layer PyG ChebNet, K=3",
+  "dataset": "Cora",
+  "checkpoint_sha256": "e18e8a2409b5f6b3e4ce1a998d7fd2716050c8f57bf93e68724849038e0d71ee",
+  "checkpoint_epochs": 100,
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges": 13264,
+      "baseline_e2e_ms": 1.9381603924557567,
+      "custom_e2e_ms": 1.0685164015740156,
+      "e2e_speedup": 1.8138798708196537,
+      "e2e_reduction_pct": 44.86955745596751,
+      "max_model_abs_error": 1.1444091796875e-05,
+      "prediction_agreement": 1.0,
+      "baseline_test_accuracy": 0.7380000352859497,
+      "custom_test_accuracy": 0.7380000352859497
+    },
+    {
+      "copies": 2,
+      "nodes": 5416,
+      "edges": 26528,
+      "baseline_e2e_ms": 3.80825053434819,
+      "custom_e2e_ms": 1.5976119320839643,
+      "e2e_speedup": 2.3837143788608377,
+      "e2e_reduction_pct": 58.048665189581406,
+      "max_model_abs_error": 9.5367431640625e-06,
+      "prediction_agreement": 1.0,
+      "baseline_test_accuracy": 0.7380000352859497,
+      "custom_test_accuracy": 0.7380000352859497
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges": 53056,
+      "baseline_e2e_ms": 8.158711483702064,
+      "custom_e2e_ms": 2.952871029265225,
+      "e2e_speedup": 2.762975897979611,
+      "e2e_reduction_pct": 63.807139948950095,
+      "max_model_abs_error": 1.1444091796875e-05,
+      "prediction_agreement": 0.9999999403953552,
+      "baseline_test_accuracy": 0.7380000352859497,
+      "custom_test_accuracy": 0.7380000352859497
+    }
+  ]
+}

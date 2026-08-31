@@ -1,0 +1,36 @@
+{
+  "model_stage": "PyG ChebConv K=3 basis recurrence",
+  "dataset": "Cora",
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges_with_laplacian_loops": 13264,
+      "channels": 1433,
+      "native_ms": 1.1100166011601686,
+      "custom_ms": 0.5273958668112755,
+      "speedup": 2.104712363165674,
+      "max_abs_error": 1.430511474609375e-06
+    },
+    {
+      "copies": 2,
+      "nodes": 5416,
+      "edges_with_laplacian_loops": 26528,
+      "channels": 1433,
+      "native_ms": 2.5560423964634538,
+      "custom_ms": 0.8559138514101505,
+      "speedup": 2.986331383996505,
+      "max_abs_error": 1.430511474609375e-06
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges_with_laplacian_loops": 53056,
+      "channels": 1433,
+      "native_ms": 5.43024786747992,
+      "custom_ms": 1.490425900556147,
+      "speedup": 3.643420223342632,
+      "max_abs_error": 1.430511474609375e-06
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "model_stage": "PyG TAGConv K=3 three-hop basis generation",
+  "dataset": "Cora",
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges": 10556,
+      "channels": 1433,
+      "native_ms": 1.3269439805299044,
+      "custom_ms": 0.6148065440356731,
+      "speedup": 2.158311412594383,
+      "max_abs_error": 5.960464477539063e-08
+    },
+    {
+      "copies": 2,
+      "nodes": 5416,
+      "edges": 21112,
+      "channels": 1433,
+      "native_ms": 2.953662071377039,
+      "custom_ms": 1.0276308748871088,
+      "speedup": 2.8742441897743833,
+      "max_abs_error": 5.960464477539063e-08
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges": 42224,
+      "channels": 1433,
+      "native_ms": 6.416558520868421,
+      "custom_ms": 1.762853586114943,
+      "speedup": 3.639870362126627,
+      "max_abs_error": 5.960464477539063e-08
+    }
+  ]
+}
