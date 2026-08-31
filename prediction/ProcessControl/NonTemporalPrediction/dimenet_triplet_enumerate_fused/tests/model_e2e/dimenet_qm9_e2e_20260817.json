@@ -1,0 +1,55 @@
+{
+  "model": "PyG DimeNetPlusPlus",
+  "dataset": "QM9 real molecule batches",
+  "weights": "deterministic initialized model; no checkpoint quality claim",
+  "native_pyg_status": "blocked: radius_graph requires pyg-lib and triplets requires torch-sparse",
+  "baseline": "resident NPU tensor triplet construction plus identical DimeNet++ forward",
+  "timing": "synchronized no-grad median; H2D/D2H and graph preprocessing excluded",
+  "results": [
+    {
+      "graphs": 16,
+      "nodes": 259,
+      "edges": 3972,
+      "max_degree": 20,
+      "triplets": 59038,
+      "topology_mismatches": 0,
+      "resident_stage_ms": 19.28545208647847,
+      "custom_stage_ms": 2.2441851906478405,
+      "stage_speedup": 8.593520787342529,
+      "resident_e2e_ms": 105.3547733463347,
+      "custom_e2e_ms": 87.96440996229649,
+      "e2e_reduction_pct": 16.506478853948597,
+      "model_max_abs_diff": 0.0
+    },
+    {
+      "graphs": 32,
+      "nodes": 465,
+      "edges": 6452,
+      "max_degree": 20,
+      "triplets": 87590,
+      "topology_mismatches": 0,
+      "resident_stage_ms": 28.15081086009741,
+      "custom_stage_ms": 3.1021637842059135,
+      "stage_speedup": 9.07457272353639,
+      "resident_e2e_ms": 154.41991295665503,
+      "custom_e2e_ms": 129.7039408236742,
+      "e2e_reduction_pct": 16.005689719510777,
+      "model_max_abs_diff": 0.0
+    },
+    {
+      "graphs": 64,
+      "nodes": 944,
+      "edges": 13042,
+      "max_degree": 20,
+      "triplets": 173204,
+      "topology_mismatches": 0,
+      "resident_stage_ms": 54.99843694269657,
+      "custom_stage_ms": 5.5763619020581245,
+      "stage_speedup": 9.862781130184134,
+      "resident_e2e_ms": 308.46781423315406,
+      "custom_e2e_ms": 247.69306322559714,
+      "e2e_reduction_pct": 19.70213688538039,
+      "model_max_abs_diff": 0.0
+    }
+  ]
+}

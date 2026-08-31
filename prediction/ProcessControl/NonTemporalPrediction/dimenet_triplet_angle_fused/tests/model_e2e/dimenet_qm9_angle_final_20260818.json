@@ -1,0 +1,32 @@
+{
+  "model": "PyG DimeNetPlusPlus with custom triplet topology on both paths",
+  "dataset": "QM9 real molecule batches",
+  "weights": "deterministic initialized model; no checkpoint quality claim",
+  "baseline": "fastest correct topology plus resident NPU triplet geometry",
+  "results": [
+    {
+      "graphs": 16,
+      "triplets": 59038,
+      "resident_ms": 86.69416466727853,
+      "custom_ms": 18.809966975823045,
+      "e2e_reduction_pct": 78.30307605129669,
+      "model_max_abs_diff": 1.71661376953125e-05
+    },
+    {
+      "graphs": 32,
+      "triplets": 87590,
+      "resident_ms": 128.48944449797273,
+      "custom_ms": 18.22368591092527,
+      "e2e_reduction_pct": 85.81697821005616,
+      "model_max_abs_diff": 6.103515625e-05
+    },
+    {
+      "graphs": 64,
+      "triplets": 173204,
+      "resident_ms": 249.28895477205515,
+      "custom_ms": 23.30525661818683,
+      "e2e_reduction_pct": 90.65130798133568,
+      "model_max_abs_diff": 7.62939453125e-06
+    }
+  ]
+}

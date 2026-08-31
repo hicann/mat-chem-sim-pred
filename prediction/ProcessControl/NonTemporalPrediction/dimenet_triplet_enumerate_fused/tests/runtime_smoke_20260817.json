@@ -1,0 +1,52 @@
+{
+  "shapes": [
+    {
+      "nodes": 64,
+      "edges": 256,
+      "degree": 4,
+      "triplets": 1024,
+      "overflow": 0,
+      "mismatched_values": 0,
+      "resident_ms": 2.1320339292287827,
+      "custom_ms": 0.531570753082633,
+      "independent_outputs": true
+    },
+    {
+      "nodes": 512,
+      "edges": 4096,
+      "degree": 8,
+      "triplets": 32768,
+      "overflow": 0,
+      "mismatched_values": 0,
+      "resident_ms": 11.444026371464133,
+      "custom_ms": 1.313474029302597,
+      "independent_outputs": true
+    },
+    {
+      "nodes": 2048,
+      "edges": 32768,
+      "degree": 16,
+      "triplets": 524288,
+      "overflow": 0,
+      "mismatched_values": 0,
+      "resident_ms": 154.88526364788413,
+      "custom_ms": 14.66647139750421,
+      "independent_outputs": true
+    }
+  ],
+  "stream": {
+    "a_counts": [
+      16448,
+      0
+    ],
+    "b_counts": [
+      16448,
+      0
+    ]
+  },
+  "stress": {
+    "iterations": 1000,
+    "checksum": 16448000,
+    "allocated_growth_bytes": 512
+  }
+}
