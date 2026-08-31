@@ -1,0 +1,45 @@
+{
+  "model": "three-layer PyG PPFConv classifier",
+  "dataset": "real ModelNet10 test point clouds",
+  "weights": "deterministic initialized model; no checkpoint quality claim",
+  "baseline": "fastest correct official/resident path; resident aggregation shared",
+  "timing": "synchronized no-grad median; KNN and transfers excluded",
+  "results": [
+    {
+      "clouds": 4,
+      "nodes": 1024,
+      "edges": 16384,
+      "native_pyg_ms": 235.3962422348559,
+      "resident_ms": 68.46972438506782,
+      "custom_ms": 2.9412221629172564,
+      "reduction_vs_strongest_pct": 95.70434642561715,
+      "native_vs_resident_max_abs_diff": 1.4901161193847656e-08,
+      "custom_max_abs_diff": 2.9802322387695312e-08,
+      "prediction_agreement": 1.0
+    },
+    {
+      "clouds": 8,
+      "nodes": 2048,
+      "edges": 32768,
+      "native_pyg_ms": 457.52350706607103,
+      "resident_ms": 135.58146241120994,
+      "custom_ms": 2.908622147515416,
+      "reduction_vs_strongest_pct": 97.8547051375698,
+      "native_vs_resident_max_abs_diff": 2.9802322387695312e-08,
+      "custom_max_abs_diff": 2.9802322387695312e-08,
+      "prediction_agreement": 1.0
+    },
+    {
+      "clouds": 16,
+      "nodes": 4096,
+      "edges": 65536,
+      "native_pyg_ms": 900.258231908083,
+      "resident_ms": 264.6940993145108,
+      "custom_ms": 3.9146628696471453,
+      "reduction_vs_strongest_pct": 98.52106152733094,
+      "native_vs_resident_max_abs_diff": 2.9802322387695312e-08,
+      "custom_max_abs_diff": 4.470348358154297e-08,
+      "prediction_agreement": 1.0
+    }
+  ]
+}
