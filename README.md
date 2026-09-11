@@ -35,7 +35,8 @@ mat-chem-sim-pred/
 │   │   └── gpr.py                           #   GP 回归 + BO 参考实现 🔧
 │   └── ProcessControl/                      # 工业过程控制与预测
 │       ├── PIDModelFit/                     #   PID 整定全流程算子（12 个）✅
-│       └── TimeSeriesForecast/              #   时序预测模型算子（10 个）✅
+│       ├── TimeSeriesForecast/              #   时序预测模型算子（13 个）✅
+│       └── NonTemporalPrediction/           #   图学习、点云与分子图几何算子（18 个）✅
 ├── template/                                # 贡献模板
 │   ├── algorithm.md                         #   算法说明模板
 │   ├── references.md                        #   参考文献模板
@@ -64,7 +65,8 @@ mat-chem-sim-pred/
 |--------|------|------|-------------------|
 | **小数据预测优化模型** | 🔧 PyTorch 参考 | 解决标记数据稀少的化工场景，聚焦小样本/主动学习/贝叶斯优化 | 高斯过程回归、贝叶斯神经网络、贝叶斯优化、度量学习等 |
 | **工业过程控制模型辨识** | ✅ Ascend C 就绪 | 面向 PID 整定、自整定与数字孪生场景，覆盖模型辨识 → 诊断 → 整定 → 仿真选优 → 评估全流程 | 模型辨识（FOPDT/IPDT/SOPDT basis-GEMM fit）、残差诊断、PID 参数生成（ZN/IMC/CC）、候选闭环仿真/评分/选优、响应特征提取、控制性能与过程能力评估（共 12 个算子） |
-| **时序预测模型** | ✅ Ascend C 就绪 | 面向化工过程 DCS/传感器时序数据，将递归扫描、lag 聚合与不支持路径下沉为单 NPU kernel | Mamba/SSM 选择性扫描、Autoformer 自相关聚合、Koopa/DMD 批量 SPD 求逆、TiRex/xLSTM sLSTM 单元、CfC/coRNN/SRU/UnICORNN/LTC 连续时间 RNN 扫描融合（共 10 个算子） |
+| **时序预测模型** | ✅ Ascend C 就绪 | 面向化工过程 DCS/传感器时序数据，将递归扫描、lag 聚合与不支持路径下沉为单 NPU kernel | Mamba/SSM 选择性扫描、Autoformer/Reformer 推理聚合、Koopa/DMD 批量 SPD 求逆、TiRex/xLSTM sLSTM 单元、CfC/coRNN/SRU/UnICORNN/LTC 连续时间 RNN 扫描融合（共 13 个算子） |
+| **非时序预测模型** | ✅ Ascend C 就绪 | 面向图学习、点云和分子图几何建模，将稀疏图传播、注意力聚合、邻域查询与几何特征计算下沉到 NPU kernel | GAT/GATv2、Graph Transformer、LightGCN、Signed GCN、ARMA、Hypergraph、ChebNet、GCNII、TAGCN、PointNet++、Point Transformer、PPFNet、DimeNet、GemNet（共 18 个算子）✅ |
 
 > ✅ Ascend C 就绪 = 已完成 Ascend C 算子开发，含完整测试 | 🔧 PyTorch 参考 = 提供 PyTorch 参考实现，可作为 Ascend C 迁移基础
 
@@ -72,7 +74,7 @@ mat-chem-sim-pred/
 
 ## 算子清单
 
-本仓库当前共包含 **31 个算子**，覆盖科学计算与预测优化两大方向。
+本仓库当前共包含 **52 个 Ascend C 算子**，覆盖科学计算、工业过程控制、时序预测、图学习、点云和分子图几何等方向。另提供材料性质预测、DAO、GPR 等 PyTorch 参考实现。
 
 ### 科学计算 — 分子动力学基础计算（AI4MD）
 
@@ -120,7 +122,7 @@ mat-chem-sim-pred/
 
 ### 预测优化 — 时序预测模型（TimeSeriesForecast）
 
-10 个算子面向时序预测模型的核心子图，将递归扫描、lag 聚合与框架不支持路径下沉为单 NPU kernel，消除 kernel launch 与中间 Tensor 物化开销：
+13 个算子面向时序预测模型的核心子图，将递归扫描、lag 聚合、LSH 分桶与框架不支持路径下沉为 NPU kernel，减少 kernel launch 与中间 Tensor 物化开销：
 
 | 类别 | 算子 | 服务模型 | 说明 | 状态 |
 |------|------|----------|------|------|

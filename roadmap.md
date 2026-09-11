@@ -24,18 +24,18 @@
 | 方向 | 规划类别数 | 规划条目数 | 已有实现 | 其中 Ascend C | 规划中 |
 |---|---:|---:|---:|---:|---:|
 | 科学计算 | 3 | 19 | 4 | 3 | 15 |
-| 预测优化 | 4 | 20 | 4 | 2 | 16 |
-| 合计 | 7 | 39 | 8 | 5 | 31 |
+| 预测优化 | 6 | 23 | 7 | 5 | 16 |
+| 合计 | 9 | 42 | 11 | 8 | 31 |
 
 > 注意：
 > 
-> “规划类别数”指材料性质预测与结构生成、机器学习分子动力学、AI for PDE、表格数据建模、工业过程控制、时序数据建模、小数据预测优化七类；
+> “规划类别数”指材料性质预测与结构生成、机器学习分子动力学、AI for PDE、表格数据建模、工业过程控制、时序数据建模、小数据预测优化、非时序图学习与预测、点云和分子图几何九类；
 > 
 > “规划条目数”是下方明细表中的模型或能力数量。
 > 
 > “已有实现”包含 PyTorch 参考实现；“其中 Ascend C”只统计已有对应 CANN/Ascend C 实现。
 > 
-> 工业过程控制按完整能力链路归并为一个条目，不按独立算子重复计数。
+> 工业过程控制按完整能力链路归并为一个条目，不按独立算子重复计数。非时序预测按图学习、点云与三维几何、分子图几何三个能力条目归并统计。
 
 ## 科学计算
 
@@ -92,9 +92,12 @@
 |---|---:|---:|---:|---:|---|
 | 表格数据建模 | 6 | 0 | 0 | 6 | 尚未形成对应模型实现 |
 | 工业过程控制 | 1 | 1 | 1 | 0 | 已有 PID 模型辨识、诊断、整定、闭环仿真和性能评估的完整 Ascend C 能力链路 |
-| 时序数据建模 | 6 | 1 | 1 | 5 | 已有 Mamba/SSM 相关 Ascend C 计算实现，其他模型方向待扩展 |
+| 时序数据建模 | 6 | 1 | 1 | 5 | 已有 Mamba/SSM、Autoformer、Reformer、连续时间 RNN 等时序计算实现 |
+| 非时序图学习与预测 | 1 | 1 | 1 | 0 | 已有图注意力、稀疏图传播和谱图计算 Ascend C 算子 |
+| 点云和三维几何 | 1 | 1 | 1 | 0 | 已有 PointNet++、Point Transformer 和点云局部几何 Ascend C 算子 |
+| 分子图几何 | 1 | 1 | 1 | 0 | 已有 DimeNet、GemNet 分子图几何 Ascend C 算子 |
 | 小数据预测优化 | 7 | 2 | 0 | 5 | 已有 GP 回归和贝叶斯优化 PyTorch 参考实现 |
-| **预测优化合计** | **20** | **4** | **2** | **16** |  |
+| **预测优化合计** | **23** | **7** | **5** | **16** | — |
 
 ### 表格数据建模
 
@@ -126,9 +129,34 @@
 | 时序预训练 | 对比学习或掩码重建时序表征 | 规划中 |
 | 时序异常检测 | 基于 Autoencoder、VAE 或 Transformer 的异常检测 | 规划中 |
 
-> 仓库在 `prediction/ProcessControl/TimeSeriesForecast/` 下提供第一批 10 个 Ascend C fused operators，覆盖 Mamba/SSM、Autoformer、Koopa/DMD、TiRex/xLSTM、CfC、coRNN、SRU、UnICORNN 和 LTC 等模型或模型族。上表按模型或能力类别归并为 1 个已实现条目，不按 10 个独立算子重复计数。
+> 仓库在 `prediction/ProcessControl/TimeSeriesForecast/` 下提供 13 个 Ascend C fused operators，覆盖 Mamba/SSM、Autoformer、Reformer、Koopa/DMD、TiRex/xLSTM、CfC、coRNN、SRU、UnICORNN 和 LTC 等模型或模型族。上表按模型或能力类别归并为 1 个已实现条目，不按 13 个独立算子重复计数。
 
-> 仓库已有 `prediction/ProcessControl/TimeSeriesForecast/` 下多个时序计算组件，包括选择性扫描、lag 聚合和连续时间 RNN 扫描等实现；上表按“模型或能力类别”归并计数，不按算子数量重复计算。
+> 仓库已有 `prediction/ProcessControl/TimeSeriesForecast/` 下多个时序计算组件，包括选择性扫描、lag 聚合、LSH 分桶和连续时间 RNN 扫描等实现；上表按“模型或能力类别”归并计数，不按算子数量重复计算。
+
+### 非时序图学习与预测
+
+| 模型或能力 | 说明 | 状态 |
+|---|---|---|
+| 图注意力与消息聚合 | GAT、GATv2、Graph Transformer、FiLM、LightGCN、Signed GCN 等 CSR 图注意力和消息聚合 | Ascend C 已实现 |
+| 稀疏图传播与谱图计算 | ARMA、超图注意力、ChebNet、GCNII、TAGCN 等稀疏传播、谱图基和残差计算 | Ascend C 已实现 |
+
+> 仓库在 `prediction/ProcessControl/NonTemporalPrediction/` 下提供图学习相关 Ascend C 算子，服务 Cora、MovieLens、Bitcoin 等图数据场景；上表将多种图模型组件归并为一个能力条目。
+
+### 点云和三维几何
+
+| 模型或能力 | 说明 | 状态 |
+|---|---|---|
+| 点云局部几何与邻域聚合 | PointNet++ 的最远点采样和球查询、PPF 点对特征、Point Transformer CSR 注意力聚合 | Ascend C 已实现 |
+
+> 仓库已提供面向 PointNet++、Point Transformer、PPFNet 等模型的点云局部几何算子，并配套 ModelNet10 等模型级验证场景。
+
+### 分子图几何
+
+| 模型或能力 | 说明 | 状态 |
+|---|---|---|
+| DimeNet/GemNet 几何特征计算 | DimeNet 三元组枚举和角度计算、GemNet 四元组几何特征计算 | Ascend C 已实现 |
+
+> 该方向为分子图和材料化学预测模型提供几何特征计算基础，当前实现面向 DimeNet、GemNet 等模型组件，并可结合 QM9 等数据场景开展模型级验证。
 
 ### 小数据预测优化
 

@@ -13,7 +13,7 @@ UnicornnScanFused(x, weight, bias) -> output
 | 名称 | dtype | Shape | 说明 |
 |------|-------|-------|------|
 | `x` | float32 | `[B, L, IN]` | 输入序列 |
-| `weight` | float32 | `[IN + 2, H]` | `[V | w_diag | c]` 的 column-packed transposed 权重 |
+| `weight` | float32 | `[IN + 2, H]` | `[V \| w_diag \| c]` 的 column-packed transposed 权重 |
 | `bias` | float32 | `[H]` | UnICORNN bias |
 | `output` | float32 | `[B, L, H]` | position state `y` 的完整序列 |
 

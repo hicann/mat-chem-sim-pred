@@ -13,7 +13,7 @@ LtcScanFused(x, weight, bias) -> output
 | 名称 | dtype | Shape | 说明 |
 |------|-------|-------|------|
 | `x` | float32 | `[B, L, IN]` | 输入序列 |
-| `weight` | float32 | `[H + IN, H]` | `[W_rec | W_in]` 的 column-packed transposed 权重 |
+| `weight` | float32 | `[H + IN, H]` | `[W_rec \| W_in]` 的 column-packed transposed 权重 |
 | `bias` | float32 | `[5H]` | `[b, gleak, Eleak, cm, A]` |
 | `output` | float32 | `[B, L, H]` | LTC hidden 序列 |
 
