@@ -1,0 +1,46 @@
+{
+  "device": "Ascend910B3",
+  "timing": "resident NPU, synchronized wall-clock median",
+  "results": [
+    {
+      "nodes": 64,
+      "edges": 256,
+      "channels": 32,
+      "resident_ms": 0.36645401269197464,
+      "custom_ms": 0.14280155301094055,
+      "speedup": 2.56617666240576,
+      "reduction_pct": 61.03152153747233,
+      "max_error": 2.384185791015625e-07
+    },
+    {
+      "nodes": 256,
+      "edges": 1024,
+      "channels": 32,
+      "resident_ms": 0.3748935414478183,
+      "custom_ms": 0.14632195234298706,
+      "speedup": 2.5621141287743776,
+      "reduction_pct": 60.9697324264644,
+      "max_error": 2.384185791015625e-07
+    },
+    {
+      "nodes": 1024,
+      "edges": 4096,
+      "channels": 32,
+      "resident_ms": 0.37578900810331106,
+      "custom_ms": 0.17206696793437004,
+      "speedup": 2.1839694894062696,
+      "reduction_pct": 54.21181454911906,
+      "max_error": 2.384185791015625e-07
+    },
+    {
+      "nodes": 2708,
+      "edges": 10832,
+      "channels": 32,
+      "resident_ms": 0.37754408549517393,
+      "custom_ms": 0.20820205099880695,
+      "speedup": 1.8133543050319776,
+      "reduction_pct": 44.8535789599945,
+      "max_error": 2.384185791015625e-07
+    }
+  ]
+}

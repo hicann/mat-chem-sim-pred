@@ -1,0 +1,50 @@
+{
+  "device": "Ascend910B3",
+  "baseline": "resident torch_npu index_add propagation",
+  "results": [
+    {
+      "nodes": 64,
+      "edges": 256,
+      "channels": 7,
+      "iterations": 10,
+      "resident_ms": 2.4814559146761894,
+      "custom_ms": 0.22495759185403585,
+      "speedup": 11.030772041186708,
+      "reduction_pct": 90.93445140316382,
+      "max_error": 5.960464477539063e-08
+    },
+    {
+      "nodes": 256,
+      "edges": 1024,
+      "channels": 7,
+      "iterations": 10,
+      "resident_ms": 2.654763055033982,
+      "custom_ms": 0.3272735048085451,
+      "speedup": 8.111756729549548,
+      "reduction_pct": 87.67221412894207,
+      "max_error": 1.1920928955078125e-07
+    },
+    {
+      "nodes": 1024,
+      "edges": 4096,
+      "channels": 7,
+      "iterations": 10,
+      "resident_ms": 2.4171810364350677,
+      "custom_ms": 0.5590111250057817,
+      "speedup": 4.324030289039539,
+      "reduction_pct": 76.87342749344798,
+      "max_error": 1.1920928955078125e-07
+    },
+    {
+      "nodes": 2708,
+      "edges": 10832,
+      "channels": 7,
+      "iterations": 10,
+      "resident_ms": 2.4928610073402524,
+      "custom_ms": 1.1225620983168483,
+      "speedup": 2.2206887361313985,
+      "reduction_pct": 54.968925463094266,
+      "max_error": 1.1920928955078125e-07
+    }
+  ]
+}
