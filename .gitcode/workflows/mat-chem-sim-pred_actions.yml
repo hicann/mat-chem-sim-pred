@@ -1,3 +1,13 @@
+#
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+#
+
 name: PR-pipeline_mat-chem-sim-pred
 
 concurrency:
@@ -9,18 +19,16 @@ concurrency:
     events: [mr_id]
 
 on:
-  workflow_dispatch:
+  # This workflow requires pull-request context for MERGE_ID, TARGET_BRANCH, and obs_path.
+  # Keep it comment-triggered to avoid unsupported workflow_dispatch runs without an MR.
   pull_request_comment:
     types: [created]
-    branches: [ '*' ]
-    comments: [ '^(?:\/)?compile*' ]
-  pr_comment:
-    types: [ created ]
-    keyword: '^(?:\/)?compile*'
+    branches: ['*']
+    comments: ['^(?:/)?compile$']
 
 env:
   org_name: ${{ vars.ORG_NAME }}
-  repo_name: ${{ atomgit.event.repository.name}}
+  repo_name: ${{ atomgit.event.repository.name }}
   MERGE_ID: ${{ atomgit.event.pull_request.number }}
   TARGET_BRANCH: ${{ atomgit.base_ref }}
   SOURCE_BRANCH: ${{ atomgit.head_ref }}
@@ -41,6 +49,8 @@ stages:
               repo_name: ${{ env.repo_name }}
               target_branch: ${{ env.TARGET_BRANCH }}
               repo_url: ${{ vars.CI_PATH }}
+              comment: ${{ atomgit.event.comment.body }}
+              token: ${{ secrets.TESTTOKEN }}
         runs-on: ['self-hosted', 'arch=x64', 'spec=small']
         container:
           image: swr.cn-north-4.myhuaweicloud.com/ci_cann/ubuntu20.04.05_x86:k8s_v1.1006
@@ -48,8 +58,9 @@ stages:
         name: Test_PreBuild
         uses: cann/.gitcode/.gitcode/workflows/pre_action.yml@master
     pre:
-    - type: auto
+      - type: auto
     fail-fast: true
+
   stage2:
     name: CodeCheck
     jobs:
@@ -60,12 +71,693 @@ stages:
           precommit_image_version: ${{ jobs.JOB_image.outputs.precommit }}
           codecheck_image_version: ${{ jobs.JOB_image.outputs.codecheck }}
     pre:
-    - type: auto
+      - type: auto
     fail-fast: false
-  
+
+  stage3:
+    name: ReferenceTest
+    jobs:
+      JOB_lint:
+        name: Lint_and_Format_Check
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Install_pre_commit
+            run: |
+              set -euo pipefail
+              if command -v python3 >/dev/null 2>&1; then
+                PYTHON_BIN=python3
+              elif command -v python >/dev/null 2>&1; then
+                PYTHON_BIN=python
+              else
+                echo "No Python interpreter found."
+                exit 1
+              fi
+              "$PYTHON_BIN" -m pip install pre-commit
+          - name: Run_pre_commit
+            run: |
+              set -euo pipefail
+              if command -v python3 >/dev/null 2>&1; then
+                PYTHON_BIN=python3
+              else
+                PYTHON_BIN=python
+              fi
+              "$PYTHON_BIN" -m pre_commit run --all-files --show-diff-on-failure
+        runs-on: ['self-hosted', 'arch=x64', 'spec=small']
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ci_cann/ubuntu20.04.05_x86:k8s_v1.1006
+      JOB_pytorch:
+        name: PyTorch_Reference_Tests
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Install_dependencies
+            run: |
+              PYTHON_BIN="${PYTHON_BIN:-python3}"
+              command -v "$PYTHON_BIN"
+              "$PYTHON_BIN" -m pip install --upgrade pip
+              "$PYTHON_BIN" - <<'PY'
+              import importlib.util
+              import subprocess
+              import sys
+
+              required = ["numpy", "pytest", "torch"]
+              missing = [name for name in required if importlib.util.find_spec(name) is None]
+              if missing:
+                  subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
+              PY
+          - name: Run_GPR_tests
+            run: |
+              set -euo pipefail
+              PYTHON_BIN="${PYTHON_BIN:-python3}"
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              if ! printf '%s\n' "$changed_files" | grep -q '^prediction/SmallData/'; then
+                echo "No SmallData files changed; GPR tests are skipped."
+                exit 0
+              fi
+              "$PYTHON_BIN" -X faulthandler -m pytest prediction/SmallData/test_gpr.py -v --tb=short
+        runs-on: ['self-hosted', 'arch=x64', 'spec=small']
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ci_cann/ubuntu20.04.05_x86:k8s_v1.1006
+      JOB_prediction_reference:
+        name: Prediction_Reference_Tests
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Install_dependencies
+            run: |
+              PYTHON_BIN="${PYTHON_BIN:-python3}"
+              command -v "$PYTHON_BIN"
+              "$PYTHON_BIN" -m pip install --upgrade pip
+              "$PYTHON_BIN" - <<'PY'
+              import importlib.util
+              import subprocess
+              import sys
+
+              required = ["numpy", "pytest", "torch"]
+              missing = [name for name in required if importlib.util.find_spec(name) is None]
+              if missing:
+                  subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
+              PY
+          - name: Run_prediction_reference_tests
+            run: |
+              set -euo pipefail
+              PYTHON_BIN="${PYTHON_BIN:-python3}"
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              pid_common_changed=false
+              timeseries_common_changed=false
+              non_temporal_common_changed=false
+              printf '%s\n' "$changed_files" | grep -q '^prediction/ProcessControl/PIDModelFit/common/' && pid_common_changed=true || true
+              printf '%s\n' "$changed_files" | grep -q '^prediction/ProcessControl/TimeSeriesForecast/common/' && timeseries_common_changed=true || true
+              printf '%s\n' "$changed_files" | grep -Eq '^prediction/ProcessControl/NonTemporalPrediction/[^/]+$' && non_temporal_common_changed=true || true
+              ran_test=false
+              overall_rc=0
+              while IFS= read -r test_dir; do
+                operator="${test_dir%/tests}"
+                run_operator=false
+                if printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
+                  run_operator=true
+                fi
+                case "$operator" in
+                  prediction/ProcessControl/PIDModelFit/*)
+                    [ "$pid_common_changed" = true ] && run_operator=true
+                    ;;
+                  prediction/ProcessControl/TimeSeriesForecast/*)
+                    [ "$timeseries_common_changed" = true ] && run_operator=true
+                    ;;
+                  prediction/ProcessControl/NonTemporalPrediction/*)
+                    [ "$non_temporal_common_changed" = true ] && run_operator=true
+                    ;;
+                esac
+                if [ "$run_operator" = false ]; then
+                  continue
+                fi
+                ran_test=true
+                echo "=== Running reference tests: $operator ==="
+                if ! (
+                  cd "$operator"
+                  "$PYTHON_BIN" -X faulthandler -m pytest tests -v --tb=short
+                ); then
+                  overall_rc=1
+                fi
+              done < <(find prediction/ProcessControl/PIDModelFit prediction/ProcessControl/TimeSeriesForecast prediction/ProcessControl/NonTemporalPrediction -type d -name tests -print)
+              if [ "$ran_test" = false ]; then
+                echo "No prediction operator files changed; reference tests are skipped."
+              fi
+              exit "$overall_rc"
+        runs-on: ['self-hosted', 'arch=x64', 'spec=small']
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ci_cann/ubuntu20.04.05_x86:k8s_v1.1006
+    pre:
+      - type: auto
+    fail-fast: true
+
+  stage4:
+    name: AscendCBuildTest
+    jobs:
+      JOB_ai4md_lj:
+        name: AI4MD_LJ
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Build_and_test_LJ
+            run: |
+              set -euo pipefail
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              operator=simulation/AI4MD/Lennard_Jones
+              if ! printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
+                echo "No ${operator} files changed; build and tests are skipped."
+                exit 0
+              fi
+              test -f "$operator/CMakeLists.txt"
+              cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
+              cmake --build "$operator/build" -j"$(nproc)"
+              ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"
+        if: "${{ default() }}"
+        runs-on: ascend-runner
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+        env:
+          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+      JOB_ai4md_dpd:
+        name: AI4MD_DPD
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Build_and_test_DPD
+            run: |
+              set -euo pipefail
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              operator=simulation/AI4MD/Dissipative_particle_dynamics
+              if ! printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
+                echo "No ${operator} files changed; build and tests are skipped."
+                exit 0
+              fi
+              test -f "$operator/CMakeLists.txt"
+              cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
+              cmake --build "$operator/build" -j"$(nproc)"
+              ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"
+        if: "${{ default() }}"
+        runs-on: ascend-runner
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+        env:
+          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+      JOB_ai4md_gaff2:
+        name: AI4MD_GAFF2
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Build_GAFF2
+            run: |
+              set -euo pipefail
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              operator=simulation/AI4MD/GAFF2
+              if ! printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
+                echo "No ${operator} files changed; build is skipped."
+                exit 0
+              fi
+              test -f "$operator/CMakeLists.txt"
+              cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
+              cmake --build "$operator/build" -j"$(nproc)"
+        if: "${{ default() }}"
+        runs-on: ascend-runner
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+        env:
+          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+      JOB_ai4md_additional:
+        name: AI4MD_Additional_Build
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Build_additional_AI4MD_operators
+            run: |
+              set -euo pipefail
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              ran_build=false
+              overall_rc=0
+              for operator in simulation/AI4MD/PME simulation/AI4MD/SHAKE simulation/AI4MD/velocity-verlet; do
+                if ! printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
+                  continue
+                fi
+                ran_build=true
+                echo "=== Building AI4MD operator: $operator ==="
+                if ! cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1; then
+                  overall_rc=1
+                  continue
+                fi
+                if ! cmake --build "$operator/build" -j"$(nproc)"; then
+                  overall_rc=1
+                  continue
+                fi
+                if [ -d "$operator/tests" ] && ! ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"; then
+                  overall_rc=1
+                fi
+              done
+              if [ "$ran_build" = false ]; then
+                echo "No additional AI4MD operator files changed; build is skipped."
+              fi
+              exit "$overall_rc"
+        if: "${{ default() }}"
+        runs-on: ascend-runner
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+        env:
+          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+      JOB_ai4pde:
+        name: AI4PDE_Build_and_Test
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Build_and_test_AI4PDE
+            run: |
+              set -euo pipefail
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              pde_common_changed=false
+              printf '%s\n' "$changed_files" | grep -q '^simulation/AI4PDE/pde_common/' && pde_common_changed=true || true
+              ran_test=false
+              overall_rc=0
+              for operator in simulation/AI4PDE/*; do
+                [ -d "$operator" ] && [ -f "$operator/CMakeLists.txt" ] || continue
+                run_operator=false
+                if printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
+                  run_operator=true
+                fi
+                [ "$pde_common_changed" = true ] && run_operator=true
+                if [ "$run_operator" = false ]; then
+                  continue
+                fi
+                ran_test=true
+                echo "=== Building and testing AI4PDE operator: $operator ==="
+                if ! cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1; then
+                  overall_rc=1
+                  continue
+                fi
+                if ! cmake --build "$operator/build" -j"$(nproc)"; then
+                  overall_rc=1
+                  continue
+                fi
+                if ! ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"; then
+                  overall_rc=1
+                fi
+              done
+              if [ "$ran_test" = false ]; then
+                echo "No AI4PDE operator files changed; build and tests are skipped."
+              fi
+              exit "$overall_rc"
+        if: "${{ default() }}"
+        runs-on: ascend-runner
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+        env:
+          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+      JOB_pid_model_fit:
+        name: PIDModelFit_Build_and_Test
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Build_and_test_PIDModelFit
+            run: |
+              set -euo pipefail
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              common_changed=false
+              printf '%s\n' "$changed_files" | grep -q '^prediction/ProcessControl/PIDModelFit/common/' && common_changed=true || true
+              ran_test=false
+              overall_rc=0
+              for operator in prediction/ProcessControl/PIDModelFit/*; do
+                [ -d "$operator" ] && [ -f "$operator/CMakeLists.txt" ] || continue
+                run_operator=false
+                if printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
+                  run_operator=true
+                fi
+                [ "$common_changed" = true ] && run_operator=true
+                if [ "$run_operator" = false ]; then
+                  continue
+                fi
+                ran_test=true
+                echo "=== Building and testing PIDModelFit operator: $operator ==="
+                if ! cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1; then
+                  overall_rc=1
+                  continue
+                fi
+                if ! cmake --build "$operator/build" -j"$(nproc)"; then
+                  overall_rc=1
+                  continue
+                fi
+                if [ -d "$operator/tests" ] && ! ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"; then
+                  overall_rc=1
+                fi
+              done
+              if [ "$ran_test" = false ]; then
+                echo "No PIDModelFit operator files changed; build and tests are skipped."
+              fi
+              exit "$overall_rc"
+        if: "${{ default() }}"
+        runs-on: ascend-runner
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+        env:
+          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+      JOB_timeseries_forecast:
+        name: TimeSeriesForecast_Build_and_Test
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Build_and_test_TimeSeriesForecast
+            run: |
+              set -euo pipefail
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              common_changed=false
+              printf '%s\n' "$changed_files" | grep -q '^prediction/ProcessControl/TimeSeriesForecast/common/' && common_changed=true || true
+              ran_test=false
+              overall_rc=0
+              for operator in prediction/ProcessControl/TimeSeriesForecast/*; do
+                [ -d "$operator" ] && [ -f "$operator/CMakeLists.txt" ] || continue
+                run_operator=false
+                if printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
+                  run_operator=true
+                fi
+                [ "$common_changed" = true ] && run_operator=true
+                if [ "$run_operator" = false ]; then
+                  continue
+                fi
+                ran_test=true
+                echo "=== Building and testing TimeSeriesForecast operator: $operator ==="
+                if ! cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1; then
+                  overall_rc=1
+                  continue
+                fi
+                if ! cmake --build "$operator/build" -j"$(nproc)"; then
+                  overall_rc=1
+                  continue
+                fi
+                if [ -d "$operator/tests" ] && ! ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"; then
+                  overall_rc=1
+                fi
+              done
+              if [ "$ran_test" = false ]; then
+                echo "No TimeSeriesForecast operator files changed; build and tests are skipped."
+              fi
+              exit "$overall_rc"
+        if: "${{ default() }}"
+        runs-on: ascend-runner
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+        env:
+          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+      JOB_non_temporal_prediction:
+        name: NonTemporalPrediction_Build_and_Test
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Build_and_test_NonTemporalPrediction
+            run: |
+              set -euo pipefail
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              common_changed=false
+              printf '%s\n' "$changed_files" | grep -Eq '^prediction/ProcessControl/NonTemporalPrediction/[^/]+$' && common_changed=true || true
+              ran_test=false
+              overall_rc=0
+              for operator in prediction/ProcessControl/NonTemporalPrediction/*; do
+                [ -d "$operator" ] && [ -f "$operator/CMakeLists.txt" ] || continue
+                run_operator=false
+                if printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
+                  run_operator=true
+                fi
+                [ "$common_changed" = true ] && run_operator=true
+                if [ "$run_operator" = false ]; then
+                  continue
+                fi
+                ran_test=true
+                echo "=== Building and testing NonTemporalPrediction operator: $operator ==="
+                if ! cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1; then
+                  overall_rc=1
+                  continue
+                fi
+                if ! cmake --build "$operator/build" -j"$(nproc)"; then
+                  overall_rc=1
+                  continue
+                fi
+                if [ -d "$operator/tests" ] && ! ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"; then
+                  overall_rc=1
+                fi
+              done
+              if [ "$ran_test" = false ]; then
+                echo "No NonTemporalPrediction operator files changed; build and tests are skipped."
+              fi
+              exit "$overall_rc"
+        if: "${{ default() }}"
+        runs-on: ascend-runner
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+        env:
+          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+      JOB_dao:
+        name: Material_Property_DAO
+        steps:
+          - name: Checkout_code
+            identifier: process_checkout
+            uses: checkout
+            with:
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              token: ${{ secrets.GIT_TOKEN }}
+          - name: Check_NPU_and_run_DAO_tests
+            run: |
+              set -euo pipefail
+              TARGET_BRANCH="${TARGET_BRANCH:-}"
+              if [ -n "$TARGET_BRANCH" ]; then
+                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
+              fi
+              base_ref=""
+              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
+                base_ref="origin/$TARGET_BRANCH"
+              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+                base_ref="HEAD^"
+              fi
+              if [ -n "$base_ref" ]; then
+                changed_files="$(git diff --name-only "$base_ref..HEAD")"
+              else
+                echo "Unable to resolve a diff base; conservatively checking all tracked files."
+                changed_files="$(git ls-files)"
+              fi
+              if ! printf '%s\n' "$changed_files" | grep -q '^simulation/MaterialPropertyPrediction/DAO/'; then
+                echo "No DAO files changed; DAO tests are skipped."
+                exit 0
+              fi
+              source "${ASCEND_TOOLKIT_HOME}/set_env.sh"
+              python3 -m pip install pytest numpy
+              python3 - <<'PY'
+              import torch
+              assert torch.npu.is_available(), "PyTorch NPU is not available"
+              PY
+              python3 -m pytest simulation/MaterialPropertyPrediction/DAO/test_ops.py -v --tb=short
+        if: "${{ default() }}"
+        runs-on: ascend-runner
+        container:
+          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
+        env:
+          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+    pre:
+      - type: auto
+    fail-fast: false
 
 post:
-  jobs: 
-    job_post: 
+  jobs:
+    job_post:
       name: Test_post
       uses: cann/.gitcode/.gitcode/workflows/post_action.yml@master
