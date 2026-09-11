@@ -434,19 +434,19 @@ python -m compileall -q <parent>/common
 
 ## 7 SCA 合规与许可证头
 
-所有提交的源文件必须携带 CANN Open Software License Agreement Version 2.0 版权声明头，并通过 CI 流水线的 SCA 许可证合规扫描；不合规的 PR 将被拦截，无法合入。
+所有新增或实质修改的源代码、脚本和构建配置文件必须携带 CANN Open Software License Agreement Version 2.0 版权声明头，并通过 CI 流水线的 SCA 许可证合规扫描；不合规的 PR 将被拦截，无法合入。
 
 ### 7.1 版权头要求
 
-所有提交的源文件必须包含 CANN Open Software License Agreement Version 2.0 版权声明头：
+所有新增或实质修改的源代码、脚本和构建配置文件必须包含 CANN Open Software License Agreement Version 2.0 版权声明头：
 
 | 文件类型 | 版权头风格 |
 |---------|-----------|
-| `.cpp` / `.h` | C/C++ 块注释 `/* ... */` |
-| `.py` | Python 行注释 `# ...` |
-| `.sh` | Shell 行注释 `# ...` |
-| `.md` | HTML 注释 `<!-- ... -->` |
+| `.cpp` / `.h` / `.hpp` | C/C++ 块注释 `/* ... */` |
+| `.py` / `.sh` | 行注释 `# ...` |
 | `CMakeLists.txt` | 行注释 `# ...` |
+
+普通 Markdown 文档默认不强制添加版权头；若 CANN 上游模板、项目规范或 CI 检查有明确要求，则按对应要求执行。
 
 ### 7.2 SCA 检查
 
