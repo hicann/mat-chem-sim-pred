@@ -36,12 +36,6 @@ STAGE_KERNEL_TYPES = {
 
 
 def profile_once(function, trace_dir: Path) -> None:
-    experimental = torch_npu.profiler._ExperimentalConfig(
-        profiler_level=torch_npu.profiler.ProfilerLevel.Level1,
-        aic_metrics=torch_npu.profiler.AiCMetrics.PipeUtilization,
-        l2_cache=False,
-        data_simplification=True,
-    )
     handler = torch_npu.profiler.tensorboard_trace_handler(
         str(trace_dir), analyse_flag=True, async_mode=False
     )
@@ -60,7 +54,6 @@ def profile_once(function, trace_dir: Path) -> None:
             profile_memory=False,
             with_stack=False,
             with_modules=True,
-            experimental_config=experimental,
         ) as profiler,
     ):
         function()
