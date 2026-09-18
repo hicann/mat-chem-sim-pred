@@ -11,20 +11,22 @@
 name: PR-pipeline_mat-chem-sim-pred
 
 concurrency:
-  max: 5
+  max: 15
   exceed-action: QUEUE
   enable: true
   preemption:
     enable: true
     events: [mr_id]
 
+# 删除任何一个都可能导致评论 /compile 无法触发流水线，请勿单独删除。
 on:
-  # This workflow requires pull-request context for MERGE_ID, TARGET_BRANCH, and obs_path.
-  # Keep it comment-triggered to avoid unsupported workflow_dispatch runs without an MR.
   pull_request_comment:
     types: [created]
-    branches: ['*']
-    comments: ['^(?:/)?compile$']
+    branches: [ '**' ]
+    comments: [ '^(?:\/)?compile*' ]
+  pr_comment:
+    types: [ created ]
+    keyword: '^(?:\/)?compile*'
 
 env:
   org_name: ${{ vars.ORG_NAME }}
@@ -49,7 +51,7 @@ stages:
               repo_name: ${{ env.repo_name }}
               target_branch: ${{ env.TARGET_BRANCH }}
               comment: ${{ atomgit.event.comment.body }}
-              token: ${{ secrets.TESTTOKEN }}
+              allow-unsafe-pr-checkout: true
         runs-on: ['self-hosted', 'arch=x64', 'spec=small']
         container:
           image: swr.cn-north-4.myhuaweicloud.com/ci_cann/ubuntu20.04.05_x86:k8s_v1.1006
@@ -76,39 +78,8 @@ stages:
   stage3:
     name: ReferenceTest
     jobs:
-      JOB_lint:
-        name: Lint_and_Format_Check
-        steps:
-          - name: Checkout_code
-            identifier: process_checkout
-            uses: checkout
-            with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              allow-unsafe-pr-checkout: true
-          - name: Install_pre_commit
-            run: |
-              set -euo pipefail
-              if command -v python3 >/dev/null 2>&1; then
-                PYTHON_BIN=python3
-              elif command -v python >/dev/null 2>&1; then
-                PYTHON_BIN=python
-              else
-                echo "No Python interpreter found."
-                exit 1
-              fi
-              "$PYTHON_BIN" -m pip install pre-commit
-          - name: Run_pre_commit
-            run: |
-              set -euo pipefail
-              if command -v python3 >/dev/null 2>&1; then
-                PYTHON_BIN=python3
-              else
-                PYTHON_BIN=python
-              fi
-              "$PYTHON_BIN" -m pre_commit run --all-files --show-diff-on-failure
-        runs-on: ['self-hosted', 'arch=x64', 'spec=small']
-        container:
-          image: swr.cn-north-4.myhuaweicloud.com/ci_cann/ubuntu20.04.05_x86:k8s_v1.1006
+      # ---- 自有：PyTorch/Python 单元测试（用 OBS 清单做变更过滤，与社区同源）----
+      # pre-commit 已由 stage2 的 codecheck_action.yml 统一处理，此处不重复调用。
       JOB_pytorch:
         name: PyTorch_Reference_Tests
         steps:
@@ -116,12 +87,27 @@ stages:
             identifier: process_checkout
             uses: checkout
             with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
               allow-unsafe-pr-checkout: true
-          - name: Install_dependencies
+          - name: Download_pr_filelist
+            uses: obs-download
+            with:
+              endpoint: "https://obs.cn-north-4.myhuaweicloud.com"
+              bucket: "ascend-ci"
+              access-key: ${{ secrets.AK }}
+              secret-key: ${{ secrets.SK }}
+              key: "${{ env.obs_path }}/pr_filelist.txt"
+              path: ${{ steps.process_checkout.outputs.path }}
+          - name: Check_and_Run
             run: |
+              set -euo pipefail
+              export PIP_INDEX_URL=https://repo.huaweicloud.com/repository/pypi/simple
               PYTHON_BIN="${PYTHON_BIN:-python3}"
-              command -v "$PYTHON_BIN"
+              changed_files="$(cat pr_filelist.txt)"
+              if ! printf '%s\n' "$changed_files" | grep -q '^prediction/SmallData/'; then
+                echo "No SmallData files changed; GPR tests are skipped."
+                exit 0
+              fi
               "$PYTHON_BIN" -m pip install --upgrade pip
               "$PYTHON_BIN" - <<'PY'
               import importlib.util
@@ -133,30 +119,6 @@ stages:
               if missing:
                   subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
               PY
-          - name: Run_GPR_tests
-            run: |
-              set -euo pipefail
-              PYTHON_BIN="${PYTHON_BIN:-python3}"
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
-              if ! printf '%s\n' "$changed_files" | grep -q '^prediction/SmallData/'; then
-                echo "No SmallData files changed; GPR tests are skipped."
-                exit 0
-              fi
               "$PYTHON_BIN" -X faulthandler -m pytest prediction/SmallData/test_gpr.py -v --tb=short
         runs-on: ['self-hosted', 'arch=x64', 'spec=small']
         container:
@@ -168,12 +130,27 @@ stages:
             identifier: process_checkout
             uses: checkout
             with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
               allow-unsafe-pr-checkout: true
-          - name: Install_dependencies
+          - name: Download_pr_filelist
+            uses: obs-download
+            with:
+              endpoint: "https://obs.cn-north-4.myhuaweicloud.com"
+              bucket: "ascend-ci"
+              access-key: ${{ secrets.AK }}
+              secret-key: ${{ secrets.SK }}
+              key: "${{ env.obs_path }}/pr_filelist.txt"
+              path: ${{ steps.process_checkout.outputs.path }}
+          - name: Check_and_Run
             run: |
+              set -euo pipefail
+              export PIP_INDEX_URL=https://repo.huaweicloud.com/repository/pypi/simple
               PYTHON_BIN="${PYTHON_BIN:-python3}"
-              command -v "$PYTHON_BIN"
+              changed_files="$(cat pr_filelist.txt)"
+              if ! printf '%s\n' "$changed_files" | grep -q '^prediction/ProcessControl/'; then
+                echo "No ProcessControl files changed; prediction reference tests are skipped."
+                exit 0
+              fi
               "$PYTHON_BIN" -m pip install --upgrade pip
               "$PYTHON_BIN" - <<'PY'
               import importlib.util
@@ -185,26 +162,6 @@ stages:
               if missing:
                   subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
               PY
-          - name: Run_prediction_reference_tests
-            run: |
-              set -euo pipefail
-              PYTHON_BIN="${PYTHON_BIN:-python3}"
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
               pid_common_changed=false
               timeseries_common_changed=false
               non_temporal_common_changed=false
@@ -256,192 +213,31 @@ stages:
   stage4:
     name: AscendCBuildTest
     jobs:
-      JOB_ai4md_lj:
-        name: AI4MD_LJ
+      # ---- ARM 算子编译测试：checkout 后调 shell 脚本，与 pypto/tilelang 的 ut.sh 模式一致 ----
+      JOB_ai4md:
+        name: AI4MD_Build_and_Test
         steps:
           - name: Checkout_code
             identifier: process_checkout
             uses: checkout
             with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
               allow-unsafe-pr-checkout: true
-          - name: Build_and_test_LJ
-            run: |
-              set -euo pipefail
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
-              operator=simulation/AI4MD/Lennard_Jones
-              if ! printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
-                echo "No ${operator} files changed; build and tests are skipped."
-                exit 0
-              fi
-              test -f "$operator/CMakeLists.txt"
-              cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
-              cmake --build "$operator/build" -j"$(nproc)"
-              ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"
-        if: "${{ default() }}"
-        runs-on: ascend-runner
-        container:
-          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-        env:
-          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
-      JOB_ai4md_dpd:
-        name: AI4MD_DPD
-        steps:
-          - name: Checkout_code
-            identifier: process_checkout
-            uses: checkout
+          - name: Download_pr_filelist
+            uses: obs-download
             with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              allow-unsafe-pr-checkout: true
-          - name: Build_and_test_DPD
+              endpoint: "https://obs.cn-north-4.myhuaweicloud.com"
+              bucket: "ascend-ci"
+              access-key: ${{ secrets.AK }}
+              secret-key: ${{ secrets.SK }}
+              key: "${{ env.obs_path }}/pr_filelist.txt"
+              path: ${{ steps.process_checkout.outputs.path }}
+          - name: Build_and_Test
             run: |
-              set -euo pipefail
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
-              operator=simulation/AI4MD/Dissipative_particle_dynamics
-              if ! printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
-                echo "No ${operator} files changed; build and tests are skipped."
-                exit 0
-              fi
-              test -f "$operator/CMakeLists.txt"
-              cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
-              cmake --build "$operator/build" -j"$(nproc)"
-              ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"
-        if: "${{ default() }}"
-        runs-on: ascend-runner
+              bash ${{ steps.process_checkout.outputs.path }}/.gitcode/scripts/ascend_build_test.sh loop_fixed "simulation/AI4MD/Lennard_Jones simulation/AI4MD/Dissipative_particle_dynamics simulation/AI4MD/GAFF2 simulation/AI4MD/PME simulation/AI4MD/SHAKE simulation/AI4MD/velocity-verlet"
+        runs-on: ['self-hosted', 'arch=arm64', 'spec=xlarge']
         container:
-          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-        env:
-          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
-      JOB_ai4md_gaff2:
-        name: AI4MD_GAFF2
-        steps:
-          - name: Checkout_code
-            identifier: process_checkout
-            uses: checkout
-            with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              allow-unsafe-pr-checkout: true
-          - name: Build_GAFF2
-            run: |
-              set -euo pipefail
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
-              operator=simulation/AI4MD/GAFF2
-              if ! printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
-                echo "No ${operator} files changed; build is skipped."
-                exit 0
-              fi
-              test -f "$operator/CMakeLists.txt"
-              cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1
-              cmake --build "$operator/build" -j"$(nproc)"
-        if: "${{ default() }}"
-        runs-on: ascend-runner
-        container:
-          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-        env:
-          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
-      JOB_ai4md_additional:
-        name: AI4MD_Additional_Build
-        steps:
-          - name: Checkout_code
-            identifier: process_checkout
-            uses: checkout
-            with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              allow-unsafe-pr-checkout: true
-          - name: Build_additional_AI4MD_operators
-            run: |
-              set -euo pipefail
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
-              ran_build=false
-              overall_rc=0
-              for operator in simulation/AI4MD/PME simulation/AI4MD/SHAKE simulation/AI4MD/velocity-verlet; do
-                if ! printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
-                  continue
-                fi
-                ran_build=true
-                echo "=== Building AI4MD operator: $operator ==="
-                if ! cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1; then
-                  overall_rc=1
-                  continue
-                fi
-                if ! cmake --build "$operator/build" -j"$(nproc)"; then
-                  overall_rc=1
-                  continue
-                fi
-                if [ -d "$operator/tests" ] && ! ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"; then
-                  overall_rc=1
-                fi
-              done
-              if [ "$ran_build" = false ]; then
-                echo "No additional AI4MD operator files changed; build is skipped."
-              fi
-              exit "$overall_rc"
-        if: "${{ default() }}"
-        runs-on: ascend-runner
-        container:
-          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-        env:
-          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+          image: swr.cn-north-4.myhuaweicloud.com/ci_cann/${{ jobs.JOB_image.outputs.Compile_Ascend_ARM }}
       JOB_ai4pde:
         name: AI4PDE_Build_and_Test
         steps:
@@ -449,263 +245,47 @@ stages:
             identifier: process_checkout
             uses: checkout
             with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
               allow-unsafe-pr-checkout: true
-          - name: Build_and_test_AI4PDE
+          - name: Download_pr_filelist
+            uses: obs-download
+            with:
+              endpoint: "https://obs.cn-north-4.myhuaweicloud.com"
+              bucket: "ascend-ci"
+              access-key: ${{ secrets.AK }}
+              secret-key: ${{ secrets.SK }}
+              key: "${{ env.obs_path }}/pr_filelist.txt"
+              path: ${{ steps.process_checkout.outputs.path }}
+          - name: Build_and_Test
             run: |
-              set -euo pipefail
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
-              pde_common_changed=false
-              printf '%s\n' "$changed_files" | grep -q '^simulation/AI4PDE/pde_common/' && pde_common_changed=true || true
-              ran_test=false
-              overall_rc=0
-              for operator in simulation/AI4PDE/*; do
-                [ -d "$operator" ] && [ -f "$operator/CMakeLists.txt" ] || continue
-                run_operator=false
-                if printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
-                  run_operator=true
-                fi
-                [ "$pde_common_changed" = true ] && run_operator=true
-                if [ "$run_operator" = false ]; then
-                  continue
-                fi
-                ran_test=true
-                echo "=== Building and testing AI4PDE operator: $operator ==="
-                if ! cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1; then
-                  overall_rc=1
-                  continue
-                fi
-                if ! cmake --build "$operator/build" -j"$(nproc)"; then
-                  overall_rc=1
-                  continue
-                fi
-                if ! ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"; then
-                  overall_rc=1
-                fi
-              done
-              if [ "$ran_test" = false ]; then
-                echo "No AI4PDE operator files changed; build and tests are skipped."
-              fi
-              exit "$overall_rc"
-        if: "${{ default() }}"
-        runs-on: ascend-runner
+              bash ${{ steps.process_checkout.outputs.path }}/.gitcode/scripts/ascend_build_test.sh loop_glob "simulation/AI4PDE/*" "simulation/AI4PDE/pde_common/"
+        runs-on: ['self-hosted', 'arch=arm64', 'spec=xlarge']
         container:
-          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-        env:
-          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
-      JOB_pid_model_fit:
-        name: PIDModelFit_Build_and_Test
+          image: swr.cn-north-4.myhuaweicloud.com/ci_cann/${{ jobs.JOB_image.outputs.Compile_Ascend_ARM }}
+      JOB_prediction:
+        name: Prediction_Build_and_Test
         steps:
           - name: Checkout_code
             identifier: process_checkout
             uses: checkout
             with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
               allow-unsafe-pr-checkout: true
-          - name: Build_and_test_PIDModelFit
-            run: |
-              set -euo pipefail
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
-              common_changed=false
-              printf '%s\n' "$changed_files" | grep -q '^prediction/ProcessControl/PIDModelFit/common/' && common_changed=true || true
-              ran_test=false
-              overall_rc=0
-              for operator in prediction/ProcessControl/PIDModelFit/*; do
-                [ -d "$operator" ] && [ -f "$operator/CMakeLists.txt" ] || continue
-                run_operator=false
-                if printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
-                  run_operator=true
-                fi
-                [ "$common_changed" = true ] && run_operator=true
-                if [ "$run_operator" = false ]; then
-                  continue
-                fi
-                ran_test=true
-                echo "=== Building and testing PIDModelFit operator: $operator ==="
-                if ! cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1; then
-                  overall_rc=1
-                  continue
-                fi
-                if ! cmake --build "$operator/build" -j"$(nproc)"; then
-                  overall_rc=1
-                  continue
-                fi
-                if [ -d "$operator/tests" ] && ! ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"; then
-                  overall_rc=1
-                fi
-              done
-              if [ "$ran_test" = false ]; then
-                echo "No PIDModelFit operator files changed; build and tests are skipped."
-              fi
-              exit "$overall_rc"
-        if: "${{ default() }}"
-        runs-on: ascend-runner
-        container:
-          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-        env:
-          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
-      JOB_timeseries_forecast:
-        name: TimeSeriesForecast_Build_and_Test
-        steps:
-          - name: Checkout_code
-            identifier: process_checkout
-            uses: checkout
+          - name: Download_pr_filelist
+            uses: obs-download
             with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              allow-unsafe-pr-checkout: true
-          - name: Build_and_test_TimeSeriesForecast
+              endpoint: "https://obs.cn-north-4.myhuaweicloud.com"
+              bucket: "ascend-ci"
+              access-key: ${{ secrets.AK }}
+              secret-key: ${{ secrets.SK }}
+              key: "${{ env.obs_path }}/pr_filelist.txt"
+              path: ${{ steps.process_checkout.outputs.path }}
+          - name: Build_and_Test
             run: |
-              set -euo pipefail
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
-              common_changed=false
-              printf '%s\n' "$changed_files" | grep -q '^prediction/ProcessControl/TimeSeriesForecast/common/' && common_changed=true || true
-              ran_test=false
-              overall_rc=0
-              for operator in prediction/ProcessControl/TimeSeriesForecast/*; do
-                [ -d "$operator" ] && [ -f "$operator/CMakeLists.txt" ] || continue
-                run_operator=false
-                if printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
-                  run_operator=true
-                fi
-                [ "$common_changed" = true ] && run_operator=true
-                if [ "$run_operator" = false ]; then
-                  continue
-                fi
-                ran_test=true
-                echo "=== Building and testing TimeSeriesForecast operator: $operator ==="
-                if ! cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1; then
-                  overall_rc=1
-                  continue
-                fi
-                if ! cmake --build "$operator/build" -j"$(nproc)"; then
-                  overall_rc=1
-                  continue
-                fi
-                if [ -d "$operator/tests" ] && ! ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"; then
-                  overall_rc=1
-                fi
-              done
-              if [ "$ran_test" = false ]; then
-                echo "No TimeSeriesForecast operator files changed; build and tests are skipped."
-              fi
-              exit "$overall_rc"
-        if: "${{ default() }}"
-        runs-on: ascend-runner
+              bash ${{ steps.process_checkout.outputs.path }}/.gitcode/scripts/ascend_build_test.sh loop_glob "prediction/ProcessControl/PIDModelFit/* prediction/ProcessControl/TimeSeriesForecast/* prediction/ProcessControl/NonTemporalPrediction/*" "prediction/ProcessControl/PIDModelFit/common/ prediction/ProcessControl/TimeSeriesForecast/common/ prediction/ProcessControl/NonTemporalPrediction/"
+        runs-on: ['self-hosted', 'arch=arm64', 'spec=xlarge']
         container:
-          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-        env:
-          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
-      JOB_non_temporal_prediction:
-        name: NonTemporalPrediction_Build_and_Test
-        steps:
-          - name: Checkout_code
-            identifier: process_checkout
-            uses: checkout
-            with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              allow-unsafe-pr-checkout: true
-          - name: Build_and_test_NonTemporalPrediction
-            run: |
-              set -euo pipefail
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
-              common_changed=false
-              printf '%s\n' "$changed_files" | grep -Eq '^prediction/ProcessControl/NonTemporalPrediction/[^/]+$' && common_changed=true || true
-              ran_test=false
-              overall_rc=0
-              for operator in prediction/ProcessControl/NonTemporalPrediction/*; do
-                [ -d "$operator" ] && [ -f "$operator/CMakeLists.txt" ] || continue
-                run_operator=false
-                if printf '%s\n' "$changed_files" | grep -q "^${operator}/"; then
-                  run_operator=true
-                fi
-                [ "$common_changed" = true ] && run_operator=true
-                if [ "$run_operator" = false ]; then
-                  continue
-                fi
-                ran_test=true
-                echo "=== Building and testing NonTemporalPrediction operator: $operator ==="
-                if ! cmake -S "$operator" -B "$operator/build" -DCMAKE_BUILD_TYPE=Release -DSOC_VERSION=Ascend910B1; then
-                  overall_rc=1
-                  continue
-                fi
-                if ! cmake --build "$operator/build" -j"$(nproc)"; then
-                  overall_rc=1
-                  continue
-                fi
-                if [ -d "$operator/tests" ] && ! ctest --test-dir "$operator/build" --output-on-failure -j"$(nproc)"; then
-                  overall_rc=1
-                fi
-              done
-              if [ "$ran_test" = false ]; then
-                echo "No NonTemporalPrediction operator files changed; build and tests are skipped."
-              fi
-              exit "$overall_rc"
-        if: "${{ default() }}"
-        runs-on: ascend-runner
-        container:
-          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-        env:
-          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+          image: swr.cn-north-4.myhuaweicloud.com/ci_cann/${{ jobs.JOB_image.outputs.Compile_Ascend_ARM }}
       JOB_dao:
         name: Material_Property_DAO
         steps:
@@ -713,44 +293,23 @@ stages:
             identifier: process_checkout
             uses: checkout
             with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
+              ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
               allow-unsafe-pr-checkout: true
+          - name: Download_pr_filelist
+            uses: obs-download
+            with:
+              endpoint: "https://obs.cn-north-4.myhuaweicloud.com"
+              bucket: "ascend-ci"
+              access-key: ${{ secrets.AK }}
+              secret-key: ${{ secrets.SK }}
+              key: "${{ env.obs_path }}/pr_filelist.txt"
+              path: ${{ steps.process_checkout.outputs.path }}
           - name: Check_NPU_and_run_DAO_tests
             run: |
-              set -euo pipefail
-              TARGET_BRANCH="${TARGET_BRANCH:-}"
-              if [ -n "$TARGET_BRANCH" ]; then
-                git fetch --no-tags --depth=1 origin "$TARGET_BRANCH" || true
-              fi
-              base_ref=""
-              if [ -n "$TARGET_BRANCH" ] && git rev-parse --verify "origin/$TARGET_BRANCH" >/dev/null 2>&1; then
-                base_ref="origin/$TARGET_BRANCH"
-              elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-                base_ref="HEAD^"
-              fi
-              if [ -n "$base_ref" ]; then
-                changed_files="$(git diff --name-only "$base_ref..HEAD")"
-              else
-                echo "Unable to resolve a diff base; conservatively checking all tracked files."
-                changed_files="$(git ls-files)"
-              fi
-              if ! printf '%s\n' "$changed_files" | grep -q '^simulation/MaterialPropertyPrediction/DAO/'; then
-                echo "No DAO files changed; DAO tests are skipped."
-                exit 0
-              fi
-              source "${ASCEND_TOOLKIT_HOME}/set_env.sh"
-              python3 -m pip install pytest numpy
-              python3 - <<'PY'
-              import torch
-              assert torch.npu.is_available(), "PyTorch NPU is not available"
-              PY
-              python3 -m pytest simulation/MaterialPropertyPrediction/DAO/test_ops.py -v --tb=short
-        if: "${{ default() }}"
-        runs-on: ascend-runner
+              bash ${{ steps.process_checkout.outputs.path }}/.gitcode/scripts/ascend_build_test.sh python simulation/MaterialPropertyPrediction/DAO
+        runs-on: ['self-hosted', 'arch=arm64', 'spec=xlarge']
         container:
-          image: swr.cn-north-4.myhuaweicloud.com/ascend/cann:7.0.RC1-ubuntu22.04-aarch64
-        env:
-          ASCEND_TOOLKIT_HOME: /usr/local/Ascend/ascend-toolkit/latest
+          image: swr.cn-north-4.myhuaweicloud.com/ci_cann/${{ jobs.JOB_image.outputs.Compile_Ascend_ARM }}
     pre:
       - type: auto
     fail-fast: false
