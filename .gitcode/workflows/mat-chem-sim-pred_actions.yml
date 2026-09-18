@@ -48,7 +48,6 @@ stages:
             with:
               repo_name: ${{ env.repo_name }}
               target_branch: ${{ env.TARGET_BRANCH }}
-              repo_url: ${{ vars.CI_PATH }}
               comment: ${{ atomgit.event.comment.body }}
               token: ${{ secrets.TESTTOKEN }}
         runs-on: ['self-hosted', 'arch=x64', 'spec=small']
@@ -85,7 +84,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Install_pre_commit
             run: |
               set -euo pipefail
@@ -118,7 +117,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Install_dependencies
             run: |
               PYTHON_BIN="${PYTHON_BIN:-python3}"
@@ -170,7 +169,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Install_dependencies
             run: |
               PYTHON_BIN="${PYTHON_BIN:-python3}"
@@ -265,7 +264,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Build_and_test_LJ
             run: |
               set -euo pipefail
@@ -308,7 +307,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Build_and_test_DPD
             run: |
               set -euo pipefail
@@ -351,7 +350,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Build_GAFF2
             run: |
               set -euo pipefail
@@ -393,7 +392,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Build_additional_AI4MD_operators
             run: |
               set -euo pipefail
@@ -451,7 +450,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Build_and_test_AI4PDE
             run: |
               set -euo pipefail
@@ -517,7 +516,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Build_and_test_PIDModelFit
             run: |
               set -euo pipefail
@@ -583,7 +582,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Build_and_test_TimeSeriesForecast
             run: |
               set -euo pipefail
@@ -649,7 +648,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Build_and_test_NonTemporalPrediction
             run: |
               set -euo pipefail
@@ -715,7 +714,7 @@ stages:
             uses: checkout
             with:
               ref: ${{ atomgit.event.pull_request.merge_commit_sha || atomgit.sha }}
-              token: ${{ secrets.GIT_TOKEN }}
+              allow-unsafe-pr-checkout: true
           - name: Check_NPU_and_run_DAO_tests
             run: |
               set -euo pipefail
