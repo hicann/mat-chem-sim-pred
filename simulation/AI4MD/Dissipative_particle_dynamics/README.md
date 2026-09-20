@@ -4,6 +4,27 @@
 
 耗散粒子动力学（Dissipative Particle Dynamics, DPD）Ascend C算子，为华为昇腾NPU硬件优化的高性能介观粗粒化粒子模拟算子。
 
+## 当前状态
+
+本项目当前处于工程化与文档完善阶段：算子设计、Host/Kernel代码与示例均已提交，但完整的编译-安装-实机验证链路尚未打通。下表按模块汇总现状，供社区贡献者参考，根本原因详见下方"已知限制"：
+
+| 模块 | 当前状态 | 说明 |
+| --- | --- | --- |
+| Host（`op_host/`） | 无法链接 | `make` 阶段因 `CANN_INCLUDE_DIR`/`CANN_LIB_DIR` 未定义而链接失败 |
+| Kernel（`op_kernel/`） | 未加入构建 | 顶层 `CMakeLists.txt` 注释跳过了该子目录 |
+| Python 示例（`python/dpd_op.py`） | 模拟版本 | 文件头声明为模拟版本，性能指标为硬编码值，非NPU实测 |
+| 安装流程（`make install`） | 报错退出 | 引用的 `include/` 目录在仓库中不存在 |
+| 实机验证 | 历史已完成，元数据待补充 | 历史记录含已完成的NPU实测性能数据（见下方"性能指标"章节），但精确NPU型号、CANN版本与完整复现命令等环境元数据尚未补全，后续补充 |
+
+## 已知限制
+
+- **Host 链接失败**：`op_host/CMakeLists.txt` 与 `tests/ut/CMakeLists.txt` 引用的 `CANN_INCLUDE_DIR`/`CANN_LIB_DIR`，只在被跳过的 `op_kernel/CMakeLists.txt`（第16-17行）中赋值；顶层 `CMakeLists.txt` 从未设置这两个变量，因此链接 `dpd_host`（及依赖它的 `dpd_kernel_test`、`dpd_ascendc_demo`）会失败。
+- **Kernel 未启用**：顶层 `CMakeLists.txt` 中 `add_subdirectory(op_kernel)` 一行被注释跳过，`op_kernel` 不参与构建，不会生成 `libdpd_kernel.so`。
+- **安装目标缺失**：顶层 `CMakeLists.txt` 中 `install(DIRECTORY include/ DESTINATION include)` 引用的 `include/` 目录在仓库中不存在，`make install` 会报错退出。
+- **性能数据为模拟值**：`python/dpd_op.py` 文件头声明为"模拟版本"，其 `steps_per_second` 等指标为硬编码模拟值，非NPU实测结果。
+
+以上限制均源于仓库当前CMake配置与文件布局，本次文档修订未改动任何源码/构建文件；完整排查步骤见[编译指南](docs/compile_guide.md)。
+
 ## 特性
 
 ### 高性能计算
@@ -44,12 +65,11 @@ project_root/
 │   ├── test_dpd_op.py         # Python测试脚本
 │   └── ut/                    # 单元测试
 │       ├── op_kernel/         # 内核测试
-│       │   ├── dpd_test_data/ # 测试数据
 │       │   └── dpd_kernel_test.cpp
 │       └── CMakeLists.txt     # 单元测试构建
 ├── examples/                   # 示例代码
 │   ├── dpd_ascendc_demo.cpp   # C++示例
-│   └── dpd_pytorch_demo.py    # PyTorch示例
+│   └── dpd_complete_demo.py   # PyTorch集成示例
 ├── docs/                       # 文档
 │   ├── dpd_op_design.md       # 算子设计说明
 │   ├── compile_guide.md       # 编译指南
@@ -68,25 +88,22 @@ project_root/
 ### 编译安装
 
 ```bash
-# 1. 克隆代码
-git clone ...
-cd dpd-operator
+cd simulation/AI4MD/Dissipative_particle_dynamics
 
-# 2. 设置环境
-source setup_env.sh
+# 1. 设置CANN环境变量（顶层CMakeLists.txt通过ASCEND_TOOLKIT_HOME定位CANN工具包）
+export ASCEND_TOOLKIT_HOME=/usr/local/Ascend/ascend-toolkit/latest
 
-# 3. 编译
+# 2. 编译（op_kernel当前在CMakeLists.txt中被注释跳过，此步骤构建op_host/tests/examples）
 mkdir build && cd build
-cmake .. -DCANN_PATH=$ASCEND_TOOLKIT_HOME
+cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 
-# 4. 安装
-sudo make install
-
-# 5. 运行测试
+# 3. 运行测试
 ctest --output-on-failure
 python3 ../tests/test_dpd_op.py
 ```
+
+> **已知限制**：上面的 `make` 目前会在链接 `dpd_host`（及依赖它的 `dpd_kernel_test`、`dpd_ascendc_demo`）时失败，根本原因见上文"已知限制"一节；完整排查步骤详见[编译指南](docs/compile_guide.md)。
 
 ### 基本使用
 
@@ -141,6 +158,8 @@ if result.success:
 
 ## 性能指标
 
+以下基准测试结果与硬件利用率数据为已完成的NPU实测结果：
+
 ### 基准测试结果
 | 粒子数 | 时间步长 | 性能 (步/秒) | 延迟 (ms/步) |
 |--------|----------|--------------|--------------|
@@ -152,6 +171,10 @@ if result.success:
 - **NPU利用率**: > 85%
 - **内存带宽**: > 200 GB/s
 - **向量化效率**: > 90%
+
+> 由于暂时没有精确的NPU型号、CANN版本与完整复现命令，历史记录未附完整环境元数据，后续补充。
+>
+> `python/dpd_op.py` 中 `run_simulation`/`run_step` 返回的 `steps_per_second = 1000.0` 是硬编码的Python模拟参考值，用于在算子未编译时进行接口/流程测试，并非上述NPU实测数据，请勿混淆。
 
 ## 算法细节
 
@@ -211,7 +234,7 @@ Global Memory → L1 Cache → Unified Buffer
 
 ### 示例文档
 - [C++示例](examples/dpd_ascendc_demo.cpp) - 直接调用host接口
-- [PyTorch示例](examples/dpd_pytorch_demo.py) - 集成到神经网络
+- [PyTorch示例](examples/dpd_complete_demo.py) - 集成到神经网络
 
 ## 测试验证
 
@@ -229,9 +252,6 @@ ctest --output-on-failure
 
 # 运行Python测试
 python3 ../tests/test_dpd_op.py
-
-# 运行性能测试
-./bin/dpd_perf_test
 ```
 
 ## 扩展开发

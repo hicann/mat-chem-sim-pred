@@ -27,7 +27,7 @@ SHAKE/
 ## 独立编译
 
 ```bash
-cd npu_ops/shake && mkdir build && cd build
+cd simulation/AI4MD/SHAKE && mkdir build && cd build
 cmake .. -DASCEND_CANN_PACKAGE_PATH=/path/to/cann
 make -j4
 ```

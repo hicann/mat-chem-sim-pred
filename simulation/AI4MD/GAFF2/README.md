@@ -31,7 +31,7 @@ GAFF2/
 ## 独立编译
 
 ```bash
-cd npu_ops/gaff2 && mkdir build && cd build
+cd simulation/AI4MD/GAFF2 && mkdir build && cd build
 cmake .. -DASCEND_CANN_PACKAGE_PATH=/path/to/cann
 make -j4
 # → libgaff2_force_host.a + libgaff2_force_kernel.so

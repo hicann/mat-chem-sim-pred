@@ -40,6 +40,4 @@ VV: 4 PASS / 0 FAIL / 4 TOTAL
 
 ### 编译运行
 
-```bash
-cd ../../build && make test_vv && ./npu_ops/velocity-verlet/test_vv
-```
+`test_vv.cpp` 当前未在 `CMakeLists.txt` 中注册为构建目标，未提供开箱即用的编译命令；如需运行，请参照[上层 README 的独立编译步骤](../README.md)自行编译并链接所需的 host 库。

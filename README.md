@@ -36,7 +36,7 @@ mat-chem-sim-pred/
 │   └── ProcessControl/                      # 工业过程控制与预测
 │       ├── PIDModelFit/                     #   PID 整定全流程算子（12 个）✅
 │       ├── TimeSeriesForecast/              #   时序预测模型算子（13 个）✅
-│       └── NonTemporalPrediction/           #   图学习、点云与分子图几何算子（18 个）✅
+│       └── NonTemporalPrediction/           #   图学习、点云与分子图几何算子（20 个）✅
 ├── template/                                # 贡献模板
 │   ├── algorithm.md                         #   算法说明模板
 │   ├── references.md                        #   参考文献模板
@@ -66,7 +66,7 @@ mat-chem-sim-pred/
 | **小数据预测优化模型** | 🔧 PyTorch 参考 | 解决标记数据稀少的化工场景，聚焦小样本/主动学习/贝叶斯优化 | 高斯过程回归、贝叶斯神经网络、贝叶斯优化、度量学习等 |
 | **工业过程控制模型辨识** | ✅ Ascend C 就绪 | 面向 PID 整定、自整定与数字孪生场景，覆盖模型辨识 → 诊断 → 整定 → 仿真选优 → 评估全流程 | 模型辨识（FOPDT/IPDT/SOPDT basis-GEMM fit）、残差诊断、PID 参数生成（ZN/IMC/CC）、候选闭环仿真/评分/选优、响应特征提取、控制性能与过程能力评估（共 12 个算子） |
 | **时序预测模型** | ✅ Ascend C 就绪 | 面向化工过程 DCS/传感器时序数据，将递归扫描、lag 聚合与不支持路径下沉为单 NPU kernel | Mamba/SSM 选择性扫描、Autoformer/Reformer 推理聚合、Koopa/DMD 批量 SPD 求逆、TiRex/xLSTM sLSTM 单元、CfC/coRNN/SRU/UnICORNN/LTC 连续时间 RNN 扫描融合（共 13 个算子） |
-| **非时序预测模型** | ✅ Ascend C 就绪 | 面向图学习、点云和分子图几何建模，将稀疏图传播、注意力聚合、邻域查询与几何特征计算下沉到 NPU kernel | GAT/GATv2、Graph Transformer、LightGCN、Signed GCN、ARMA、Hypergraph、ChebNet、GCNII、TAGCN、PointNet++、Point Transformer、PPFNet、DimeNet、GemNet（共 18 个算子）✅ |
+| **非时序预测模型** | ✅ Ascend C 就绪 | 面向图学习、点云和分子图几何建模，将稀疏图传播、注意力聚合、邻域查询与几何特征计算下沉到 NPU kernel | GAT/GATv2、Graph Transformer、GraphSAGE、LightGCN、Signed GCN、ARMA、APPNP、FiLM、Hypergraph、ChebNet、GCNII、TAGCN、PointNet++、Point Transformer、PPFNet、DimeNet、GemNet（共 20 个算子） |
 
 > ✅ Ascend C 就绪 = 已完成 Ascend C 算子开发，含完整测试 | 🔧 PyTorch 参考 = 提供 PyTorch 参考实现，可作为 Ascend C 迁移基础
 
@@ -74,7 +74,7 @@ mat-chem-sim-pred/
 
 ## 算子清单
 
-本仓库当前共包含 **52 个 Ascend C 算子**，覆盖科学计算、工业过程控制、时序预测、图学习、点云和分子图几何等方向。另提供材料性质预测、DAO、GPR 等 PyTorch 参考实现。
+本仓库当前共包含 **54 个 Ascend C 算子**，覆盖科学计算、工业过程控制、时序预测、图学习、点云和分子图几何等方向。另提供材料性质预测、DAO、GPR 等 PyTorch 参考实现。
 
 ### 科学计算 — 分子动力学基础计算（AI4MD）
 
@@ -136,9 +136,40 @@ mat-chem-sim-pred/
 | | `sru_scan_fused` | SRU | SRU 递归扫描融合 | ✅ Ascend C |
 | | `unicornn_scan_fused` | UnICORNN | UnICORNN 递归扫描融合 | ✅ Ascend C |
 | | `ltc_scan_fused` | LTC | LTC 递归扫描融合 | ✅ Ascend C |
+| **LSH 分桶与推理聚合** | `reformer_lsh_bucket_sort` | Reformer | LSH 分桶排序 + sticker/inverse 构造融合 | ✅ Ascend C |
+| | `reformer_lsh_qkv_gather` | Reformer | 复用 LSH index 整理 query/key 与 value | ✅ Ascend C |
+| | `autoformer_inference_aggregate_fused` | Autoformer | 均值归约 + TopK + softmax + 循环移位加权聚合融合 | ✅ Ascend C |
 
 > TimeSeriesForecast 提供 `docs/`（文档与 TorchAir 性能报告）和 `deliverables/`（评审与交付材料）两个支撑目录。
 
+### 预测优化 — 非时序预测模型（NonTemporalPrediction）
+
+20 个算子覆盖图学习、点云和三维几何、分子图几何三个方向，将 PyTorch Geometric 及点云网络参考实现中的稀疏图传播、注意力聚合、邻域查询或分子图多体几何计算下沉为单个 NPU kernel：
+
+| 类别 | 算子 | 服务模型 | 说明 | 状态 |
+|------|------|----------|------|------|
+| **非时序图学习与预测** | `csr_gat_attention_aggregate_fused` | GAT | 稀疏注意力打分 + LeakyReLU + CSR 分段 softmax + 邻居加权聚合 | ✅ Ascend C |
+| | `csr_gatv2_dynamic_attention_aggregate_fused` | GATv2 | 动态注意力（先加后打分）+ CSR softmax + 聚合 | ✅ Ascend C |
+| | `csr_sage_mean_root_relu_fused` | GraphSAGE | 邻居均值 + root 分支 + ReLU 融合 | ✅ Ascend C |
+| | `csr_lightgcn_k2_weighted_sum_fused` | LightGCN | K=2 对称归一化两跳传播 + 层加权求和 | ✅ Ascend C |
+| | `csr_signed_cross_mean_pack_fused` | Signed GCN | 第二层正/负邻域交叉均值打包 | ✅ Ascend C |
+| | `csr_arma_stack_propagate_fused` | ARMA | K 路并行栈式加权传播 + root/bias + ReLU | ✅ Ascend C |
+| | `csr_appnp_propagate_fused` | APPNP | 定步数传播阶段乒乓 workspace 融合 | ✅ Ascend C |
+| | `csr_film_modulated_mean_fused` | FiLM | 逐边特征线性调制 + 均值聚合 | ✅ Ascend C |
+| | `csr_hypergraph_attention_two_stage_propagate_fused` | Hypergraph | 节点-超边-节点两阶段注意力传播 | ✅ Ascend C |
+| | `csr_chebyshev_basis_k3_fused` | ChebNet | `K=3` 切比雪夫基 `T0/T1/T2` 生成 | ✅ Ascend C |
+| | `csr_gcn2_residual_propagate_fused` | GCNII | 传播 + 初始残差融合 | ✅ Ascend C |
+| | `csr_tagcn_basis_k3_fused` | TAGCN | `K=3` 四阶特征基逐级传播 | ✅ Ascend C |
+| | `csr_transformer_dot_attention_aggregate_fused` | Graph Transformer | 缩放点积多头注意力 + CSR softmax + 聚合 | ✅ Ascend C |
+| **点云和三维几何** | `farthest_point_sampling_fused` | PointNet++ | 点云最远点采样（FPS）中心点选取 | ✅ Ascend C |
+| | `point_ball_query_fused` | PointNet++ | 球半径邻域查询 + 距离过滤 + 有效计数 | ✅ Ascend C |
+| | `csr_point_transformer_attention_aggregate_fused` | Point Transformer | 位置注意力打分 + 分段 softmax + 位置增量聚合 | ✅ Ascend C |
+| | `ppf_point_pair_features_fused` | PPFNet | 点对特征（距离 + 三个法向角）计算 | ✅ Ascend C |
+| **分子图几何** | `dimenet_triplet_enumerate_fused` | DimeNet / DimeNet++ | 方向性 `k→j→i` 三元组枚举 | ✅ Ascend C |
+| | `dimenet_triplet_angle_fused` | DimeNet / DimeNet++ | 三元组角度 `atan2` 几何计算 | ✅ Ascend C |
+| | `gemnet_quadruplet_geometry_fused` | GemNet | 官方 GemNet 四元组几何（角度与投影扭转角） | ✅ Ascend C |
+
+> NonTemporalPrediction 目录暂无汇总 README；各算子目录下均含独立 `README.md`/`docs/`/`tests/`。
 
 ## 贡献模板
 
@@ -214,12 +245,13 @@ mat-chem-sim-pred/
 
 > 可通过 `git clone` 将上述仓库下载至本地 `Reference/` 目录作为学习参考。该目录已加入 `.gitignore`，不会纳入本仓库版本管理。
 
-## 快速上手
+## 环境要求
 
-环境要求
 - CANN ≥ 7.0
 - Atlas A2/A3 训练/推理卡
 - CMake ≥ 3.16
+
+具体编译、测试命令因模块而异，请参见各算子目录下的 README 或 [CONTRIBUTING.md](CONTRIBUTING.md) 的构建测试说明。
 
 ## 许可证
 

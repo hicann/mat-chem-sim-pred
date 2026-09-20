@@ -29,7 +29,7 @@ PME/
 ## 独立编译
 
 ```bash
-cd npu_ops/pme && mkdir build && cd build
+cd simulation/AI4MD/PME && mkdir build && cd build
 cmake .. -DASCEND_CANN_PACKAGE_PATH=/path/to/cann
 make -j4
 ```

@@ -132,7 +132,7 @@ $$(\mathcal{K}(\phi) v_t)(x) = \mathcal{F}^{-1}(R_\phi \cdot \mathcal{F}(v_t))(x
 | **PINN** | PINN 族 | FC + AutoDiff | ✅ | N/A | P0（已完成） |
 | **FNO** | 神经算子 | FFT + 谱乘积 | ✅ | N/A | P0（已完成） |
 | **DeepONet** | 神经算子 | 双网络 + 内积 | ✅ | N/A | P0（已完成） |
-| **MeshGraphNet** | 图网络 | 消息传递 | ✅ | N/A | P0（已完成） |
+| **MeshGraphNet** | 图网络 | 消息传递 | 否 | 未评估 | 规划中 |
 | **cPINN/XPINN** | PINN 变体 | 复用 PINN | 否 | 低 | P1（短期） |
 | **MIONet** | 神经算子 | 复用 DeepONet | 否 | 低 | P1（短期） |
 | **PINNsFormer** | PINN 变体 | Attention + MLP | 否 | 中 | P1（短期） |
@@ -146,6 +146,8 @@ $$(\mathcal{K}(\phi) v_t)(x) = \mathcal{F}^{-1}(R_\phi \cdot \mathcal{F}(v_t))(x
 | **球形 FNO** | 神经算子 | SHT | 否 | 高 | P3（长期） |
 | **等变 GNN** | 图网络 | 球谐 + CG 积 | 否 | 高 | P3（长期） |
 | **Diffusion-PDE** | 扩散模型 | U-Net + 多步采样 | 否 | 高 | P3（长期） |
+
+> MeshGraphNet 当前仅有 tiling 数据结构定义（`pde_common/pde_types.h` 中的 `MeshGraphNetTilingData`）和构建脚本占位目标（`CMakeLists.txt`/`build.sh` 中的 `mesh_graph_net` target），对应的 `mesh_graph_net/` 算子目录尚未创建（默认 `BUILD_TARGET=all` 会因此在 CMake 配置阶段失败），因此标记为规划中而非已完成。
 
 ## 标杆工作与资源
 
@@ -162,12 +164,15 @@ $$(\mathcal{K}(\phi) v_t)(x) = \mathcal{F}^{-1}(R_\phi \cdot \mathcal{F}(v_t))(x
 
 ## 本仓库中的定位
 
-本方向规划中的算子/模型包括：
+本方向已实现的算子：
 
 - PINN 推理算子（全连接前向 + 自动微分）✅ 已发布
 - FNO 推理算子（FFT → 频域变换 → IFFT 完整链路）✅ 已发布
 - DeepONet 推理算子（Branch net × Trunk net 内积）✅ 已发布
-- MeshGraphNet 推理算子（非结构网格上的消息传递）✅ 已发布
+
+本方向规划中的算子/模型包括：
+
+- MeshGraphNet 推理算子（非结构网格上的消息传递）
 - PINN 变体推理算子（cPINN / XPINN / B-PINN / PINNsFormer / gPINN）
 - 神经算子变体推理算子（MIONet / U-NO / WNO / KNO / LNO）
 - 可微分 PDE 层算子（有限差分/有限体积封装为可微分层）

@@ -22,7 +22,7 @@ install(TARGETS dpd_ascendc_demo
 )
 
 install(FILES
-    dpd_pytorch_demo.py
+    dpd_complete_demo.py
     DESTINATION examples
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
                 GROUP_READ GROUP_EXECUTE
@@ -48,4 +48,4 @@ install(FILES
 
 message(STATUS "示例构建配置完成")
 message(STATUS "C++示例: dpd_ascendc_demo")
-message(STATUS "Python示例: dpd_pytorch_demo.py")
+message(STATUS "Python示例: dpd_complete_demo.py")

@@ -41,6 +41,4 @@ PME: 6 PASS / 0 FAIL / 6 TOTAL
 
 ### 编译运行
 
-```bash
-cd ../../build && make test_pme && ./npu_ops/pme/test_pme
-```
+`test_pme.cpp` 当前未在 `CMakeLists.txt` 中注册为构建目标，未提供开箱即用的编译命令；如需运行，请参照[上层 README 的独立编译步骤](../README.md)自行编译并链接所需的 host 库。

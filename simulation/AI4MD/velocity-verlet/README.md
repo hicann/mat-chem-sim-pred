@@ -12,7 +12,7 @@
 ## 文件结构
 
 ```
-Velocity_Verlet/
+velocity-verlet/
 ├── README.md
 ├── CMakeLists.txt
 ├── op_kernel/
@@ -29,7 +29,7 @@ Velocity_Verlet/
 ## 独立编译
 
 ```bash
-cd npu_ops/velocity-verlet && mkdir build && cd build
+cd simulation/AI4MD/velocity-verlet && mkdir build && cd build
 cmake .. -DASCEND_CANN_PACKAGE_PATH=/path/to/cann
 make -j4
 # → libvv_host.a + 3个kernel .so

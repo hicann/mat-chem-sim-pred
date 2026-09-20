@@ -301,8 +301,9 @@ public:
 
 ### 8.2 编译步骤
 ```bash
+export ASCEND_TOOLKIT_HOME=/usr/local/Ascend/ascend-toolkit/latest
 mkdir build && cd build
-cmake .. -DCANN_PATH=/path/to/cann
+cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 ```
 
@@ -312,7 +313,7 @@ make -j$(nproc)
 ./bin/dpd_ascendc_demo
 
 # Python示例
-python examples/dpd_pytorch_demo.py
+python ../examples/dpd_complete_demo.py
 ```
 
 ## 9. 维护和扩展
