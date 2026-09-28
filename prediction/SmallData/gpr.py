@@ -258,9 +258,14 @@ class BayesianOptimizer:
         return x_cand[acq.argmax()]
 
     def update(self, x: torch.Tensor, y: torch.Tensor):
-        """Add observed point."""
+        """Add one observed point with its scalar objective value."""
+        target = torch.as_tensor(y, dtype=x.dtype, device=x.device)
+        if target.numel() != 1:
+            raise ValueError(
+                f"objective value must be scalar, got shape {tuple(target.shape)}"
+            )
         self.x_observed.append(x)
-        self.y_observed.append(y)
+        self.y_observed.append(target.reshape(()))
 
     def maximize(self, objective, n_iter: int = 20):
         """

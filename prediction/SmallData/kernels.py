@@ -128,7 +128,10 @@ def matern_kernel_np(x1: np.ndarray, x2: np.ndarray,
 
 class PeriodicKernel(Kernel):
     """
-    k(x, y) = σ² * exp(-2 * sin²(π * ||x - y|| / p) / l²)
+    k(x, y) = σ² * exp(-2 * sum_j sin²(π * (x_j - y_j) / p) / l²)
+
+    The multidimensional kernel is the product of the one-dimensional
+    periodic kernels over input features.
     """
 
     def __init__(self, length_scale: float = 1.0, variance: float = 1.0, period: float = 1.0):
@@ -150,8 +153,8 @@ class PeriodicKernel(Kernel):
         return torch.exp(self.log_period)
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
-        dist = torch.cdist(x1, x2)
-        sin_term = torch.sin(torch.pi * dist / self.period).pow(2)
+        delta = x1[:, None, :] - x2[None, :, :]
+        sin_term = torch.sin(torch.pi * delta / self.period).pow(2).sum(dim=-1)
         return self.variance * torch.exp(-2 * sin_term / self.length_scale ** 2)
 
 

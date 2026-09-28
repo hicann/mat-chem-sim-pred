@@ -76,6 +76,26 @@ def test_sum_kernel():
     print(f"  SumKernel validation: PASS (max_diff={diff:.2e})")
 
 
+def test_periodic_kernel_is_psd_for_multidimensional_inputs():
+    x_np = np.random.RandomState(42).randn(6, 2).astype(np.float32)
+    x = torch.from_numpy(x_np)
+    kernel = PeriodicKernel(length_scale=1.0, variance=0.5, period=2.0)
+
+    gram = kernel(x, x)
+    assert torch.linalg.eigvalsh(gram).min().item() >= -1e-6
+    gp = GaussianProcessRegressor(kernel=kernel, noise_scale=0.1)
+    gp.fit(x, torch.arange(x.shape[0], dtype=torch.float32))
+
+    x_1d = torch.tensor([[0.0], [0.2], [0.7], [1.3], [2.1]])
+    kernel_1d = PeriodicKernel(length_scale=0.5, variance=1.0, period=2.0)
+    dist = torch.cdist(x_1d, x_1d)
+    expected = torch.exp(-2 * torch.sin(torch.pi * dist / 2.0).pow(2) / 0.5**2)
+    torch.testing.assert_close(kernel_1d(x_1d, x_1d), expected)
+
+    gp_1d = GaussianProcessRegressor(kernel=kernel_1d, noise_scale=0.1)
+    gp_1d.fit(x_1d, torch.sin(x_1d[:, 0]))
+
+
 def test_gp_fit_predict():
     np.random.seed(42)
     torch.manual_seed(42)
@@ -97,13 +117,13 @@ def test_gp_fit_predict():
     mu_t, std_t = gp.predict(x_test_t, return_std=True)
     mu_np, std_np = gp_predict_np(x, y, x_test, length_scale=1.0, variance=1.0, noise=0.1)
 
-    check("GP predict mean", mu_t.numpy(), mu_np)
-    check("GP predict std", std_t.numpy(), std_np)
+    check("GP predict mean", mu_t.detach().numpy(), mu_np)
+    check("GP predict std", std_t.detach().numpy(), std_np)
 
     assert torch.all(std_t >= 0), "Std should be non-negative"
 
     y_truth = np.sin(x_test.squeeze())
-    rmse = np.sqrt(np.mean((mu_t.numpy() - y_truth) ** 2))
+    rmse = np.sqrt(np.mean((mu_t.detach().numpy() - y_truth) ** 2))
     print(f"  GP prediction RMSE: {rmse:.4f}")
 
 
@@ -203,6 +223,7 @@ def main():
     test_rbf_kernel()
     test_matern_kernel()
     test_sum_kernel()
+    test_periodic_kernel_is_psd_for_multidimensional_inputs()
     test_gp_fit_predict()
     test_gp_log_marginal_likelihood()
     test_gp_training()
