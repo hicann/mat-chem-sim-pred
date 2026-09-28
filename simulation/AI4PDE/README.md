@@ -147,7 +147,7 @@ $$(\mathcal{K}(\phi) v_t)(x) = \mathcal{F}^{-1}(R_\phi \cdot \mathcal{F}(v_t))(x
 | **等变 GNN** | 图网络 | 球谐 + CG 积 | 否 | 高 | P3（长期） |
 | **Diffusion-PDE** | 扩散模型 | U-Net + 多步采样 | 否 | 高 | P3（长期） |
 
-> MeshGraphNet 当前仅有 tiling 数据结构定义（`pde_common/pde_types.h` 中的 `MeshGraphNetTilingData`）和构建脚本占位目标（`CMakeLists.txt`/`build.sh` 中的 `mesh_graph_net` target），对应的 `mesh_graph_net/` 算子目录尚未创建（默认 `BUILD_TARGET=all` 会因此在 CMake 配置阶段失败），因此标记为规划中而非已完成。
+> MeshGraphNet 当前仅有 tiling 数据结构定义（`pde_common/pde_types.h` 中的 `MeshGraphNetTilingData`），对应的 `mesh_graph_net/` 算子目录尚未创建，因此标记为规划中而非已完成。默认 `BUILD_TARGET=all` 只构建已实现的 PINN、FNO 和 DeepONet。
 
 ## 标杆工作与资源
 

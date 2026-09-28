@@ -32,8 +32,9 @@ elif [ "$1" == "fno" ]; then
     TARGET="fno"
 elif [ "$1" == "deeponet" ]; then
     TARGET="deeponet"
-elif [ "$1" == "mesh" ]; then
-    TARGET="mesh_graph_net"
+elif [ -n "$1" ]; then
+    echo "Unknown build target: $1 (supported: pinn, fno, deeponet)" >&2
+    exit 1
 fi
 
 mkdir -p build

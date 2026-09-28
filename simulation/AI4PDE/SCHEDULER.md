@@ -63,9 +63,9 @@ See LICENSE in the root of the software repository for the full text of the Lice
 
 ---
 
-## Phase 3 — DeepONet & MeshGraphNet (Weeks 17–24) ✅ DEVELOPED
+## Phase 3 — DeepONet (Weeks 17–24) ✅ DEVELOPED
 
-**Goal**: Two operator network operators supporting different PDE paradigms.
+**Goal**: An operator network supporting function-to-function PDE mappings.
 
 ### DeepONet
 
@@ -76,16 +76,6 @@ See LICENSE in the root of the software repository for the full text of the Lice
 | M3.3: Inner product kernel | Batched `sum(b_k * t_k)` output. Host API + Python integration test. | ✅ DONE |
 
 **Built**: `op_kernel/deeponet_kernel.h/.cpp`, `op_host/deeponet_host.h/.cpp`, `op_host/deeponet_def.cpp`, `examples/test_aclnn_deeponet.cpp`, `tests/test_deeponet.py`, `tests/benchmark_deeponet.py`, `tests/ut/op_kernel/test_deeponet.cpp`.
-
-### MeshGraphNet
-
-| Milestone | Deliverables | Status |
-|-----------|-------------|--------|
-| M3.4: MeshGraphNet design | Algorithm doc, graph construction, message-passing loop spec. | 🔧 INCOMPLETE |
-| M3.5: Graph construction kernel | Build edge list from mesh connectivity on device. | ✅ DONE |
-| M3.6: Message passing kernel | Node→Edge→Node message passing with MLP updates. Host API + Python test. | ✅ DONE |
-
-**Built**: `op_kernel/mesh_graph_net_kernel.h/.cpp`, `op_host/mesh_graph_net_host.h/.cpp`, `op_host/mesh_graph_net_def.cpp`, `examples/test_aclnn_mesh_graph_net.cpp`, `tests/test_mesh_graph_net.py`, `tests/benchmark_mesh_graph_net.py`, `tests/ut/op_kernel/test_mesh_graph_net.cpp`.
 
 ---
 
@@ -120,7 +110,7 @@ See LICENSE in the root of the software repository for the full text of the Lice
 ```
 AI4PDE/
 ├── SCHEDULER.md              # This file
-├── build.sh                  # Build script (all, pinn, fno, deeponet, mesh)
+├── build.sh                  # Build script (all, pinn, fno, deeponet)
 ├── CMakeLists.txt            # Top-level build
 ├── pde_common/
 │   ├── pde_math.h            # tanh, sigmoid, relu, exp, cos, sin (no math.h)
@@ -128,10 +118,9 @@ AI4PDE/
 ├── pinn/                     # Phase 1: PINN
 ├── fno/                      # Phase 2: FNO
 ├── deeponet/                 # Phase 3a: DeepONet
-└── mesh_graph_net/           # Phase 3b: MeshGraphNet
 ```
 
-**Total**: 40+ files across 4 complete operator implementations.
+**Total**: Three complete operator implementations: PINN, FNO and DeepONet.
 
 ---
 
@@ -141,7 +130,7 @@ AI4PDE/
 |--------|--------|
 | Numerical accuracy (force/field) | rel error < 1e-3 |
 | Speedup vs CPU (batch inference) | ≥10× at industrial scale |
-| Operators delivered (coded) | 4 of 6 (PINN, FNO, DeepONet, MeshGraphNet) |
+| Operators delivered (coded) | 3 of 6 (PINN, FNO, DeepONet) |
 | Benchmarks completed | ≥1 per operator (Python) |
 | C++ UT coverage | Kernel-level tests per operator |
 | Python integration tests | ≥1 per operator |
