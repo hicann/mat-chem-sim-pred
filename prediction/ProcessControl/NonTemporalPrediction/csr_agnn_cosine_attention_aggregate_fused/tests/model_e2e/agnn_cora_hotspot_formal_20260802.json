@@ -1,0 +1,413 @@
+{
+  "candidate": "agnn",
+  "model": "complete two-layer maintained PyG model",
+  "profiled_baseline": "exact resident padded NPU implementation",
+  "dataset": "Cora",
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges": 13264,
+      "replaceable_calls": 2,
+      "kernel_count": 46,
+      "full_model_kernel_us": 37529.708999999995,
+      "conservative_stage_kernel_us": 37352.99399999999,
+      "conservative_stage_hotspot_pct": 99.52913303964066,
+      "stage_kernel_types": [
+        "Div",
+        "Index",
+        "MaskedFill",
+        "Mul",
+        "ReduceSum",
+        "ReduceV2",
+        "Softmax",
+        "SoftmaxV2",
+        "Sqrt"
+      ],
+      "by_type": [
+        {
+          "type": "Index",
+          "count": 10,
+          "duration_us": 37084.657,
+          "full_model_ratio": 0.9881413415702212
+        },
+        {
+          "type": "Mul",
+          "count": 6,
+          "duration_us": 91.899,
+          "full_model_ratio": 0.0024487000418788223
+        },
+        {
+          "type": "ReduceSum",
+          "count": 4,
+          "duration_us": 71.619,
+          "full_model_ratio": 0.0019083281461095263
+        },
+        {
+          "type": "MaskedFill",
+          "count": 4,
+          "duration_us": 61.78,
+          "full_model_ratio": 0.0016461625108790481
+        },
+        {
+          "type": "SoftmaxV2",
+          "count": 2,
+          "duration_us": 43.039,
+          "full_model_ratio": 0.0011467981273182801
+        },
+        {
+          "type": "LpNormV2",
+          "count": 2,
+          "duration_us": 42.478,
+          "full_model_ratio": 0.0011318499698465556
+        },
+        {
+          "type": "MatMulV2",
+          "count": 2,
+          "duration_us": 39.358999999999995,
+          "full_model_ratio": 0.0010487424775928852
+        },
+        {
+          "type": "LogicalNot",
+          "count": 4,
+          "duration_us": 26.4,
+          "full_model_ratio": 0.000703442704551746
+        },
+        {
+          "type": "TensorMove",
+          "count": 4,
+          "duration_us": 25.758,
+          "full_model_ratio": 0.0006863362569637831
+        },
+        {
+          "type": "BroadcastTo",
+          "count": 2,
+          "duration_us": 19.28,
+          "full_model_ratio": 0.0005137263387786994
+        },
+        {
+          "type": "RealDiv",
+          "count": 2,
+          "duration_us": 11.4,
+          "full_model_ratio": 0.0003037593496927994
+        },
+        {
+          "type": "Relu",
+          "count": 1,
+          "duration_us": 5.64,
+          "full_model_ratio": 0.00015028094142696392
+        },
+        {
+          "type": "ClipByValueV2",
+          "count": 2,
+          "duration_us": 5.12,
+          "full_model_ratio": 0.00013642525179185377
+        },
+        {
+          "type": "Fill",
+          "count": 1,
+          "duration_us": 1.28,
+          "full_model_ratio": 3.4106312947963444e-05
+        },
+        {
+          "type": "Sqrt",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        },
+        {
+          "type": "Softmax",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        },
+        {
+          "type": "ReduceV2",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        },
+        {
+          "type": "Div",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges": 53056,
+      "replaceable_calls": 2,
+      "kernel_count": 46,
+      "full_model_kernel_us": 258114.08200000002,
+      "conservative_stage_kernel_us": 257741.07100000003,
+      "conservative_stage_hotspot_pct": 99.85548599397998,
+      "stage_kernel_types": [
+        "Div",
+        "Index",
+        "MaskedFill",
+        "Mul",
+        "ReduceSum",
+        "ReduceV2",
+        "Softmax",
+        "SoftmaxV2",
+        "Sqrt"
+      ],
+      "by_type": [
+        {
+          "type": "Index",
+          "count": 10,
+          "duration_us": 256997.58500000002,
+          "full_model_ratio": 0.9956744049323121
+        },
+        {
+          "type": "ReduceSum",
+          "count": 4,
+          "duration_us": 318.11400000000003,
+          "full_model_ratio": 0.0012324550351344257
+        },
+        {
+          "type": "Mul",
+          "count": 6,
+          "duration_us": 259.135,
+          "full_model_ratio": 0.001003955297564896
+        },
+        {
+          "type": "MatMulV2",
+          "count": 1,
+          "duration_us": 189.076,
+          "full_model_ratio": 0.000732528804840644
+        },
+        {
+          "type": "MaskedFill",
+          "count": 4,
+          "duration_us": 90.118,
+          "full_model_ratio": 0.0003491401914289976
+        },
+        {
+          "type": "SoftmaxV2",
+          "count": 2,
+          "duration_us": 76.119,
+          "full_model_ratio": 0.0002949044833594162
+        },
+        {
+          "type": "TensorMove",
+          "count": 4,
+          "duration_us": 39.218,
+          "full_model_ratio": 0.0001519405671171401
+        },
+        {
+          "type": "LpNormV2",
+          "count": 2,
+          "duration_us": 39.138999999999996,
+          "full_model_ratio": 0.00015163450090258923
+        },
+        {
+          "type": "LogicalNot",
+          "count": 4,
+          "duration_us": 31.68,
+          "full_model_ratio": 0.00012273642629075928
+        },
+        {
+          "type": "MatMulV3",
+          "count": 1,
+          "duration_us": 24.519,
+          "full_model_ratio": 9.499287993128557e-05
+        },
+        {
+          "type": "BroadcastTo",
+          "count": 2,
+          "duration_us": 19.82,
+          "full_model_ratio": 7.678775154933235e-05
+        },
+        {
+          "type": "RealDiv",
+          "count": 2,
+          "duration_us": 12.999,
+          "full_model_ratio": 5.0361452189191284e-05
+        },
+        {
+          "type": "ClipByValueV2",
+          "count": 2,
+          "duration_us": 8.78,
+          "full_model_ratio": 3.401596662982533e-05
+        },
+        {
+          "type": "Relu",
+          "count": 1,
+          "duration_us": 6.38,
+          "full_model_ratio": 2.4717752516889023e-05
+        },
+        {
+          "type": "Fill",
+          "count": 1,
+          "duration_us": 1.4,
+          "full_model_ratio": 5.42395823254618e-06
+        },
+        {
+          "type": "Sqrt",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        },
+        {
+          "type": "Softmax",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        },
+        {
+          "type": "ReduceV2",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        },
+        {
+          "type": "Div",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "copies": 16,
+      "nodes": 43328,
+      "edges": 212224,
+      "replaceable_calls": 2,
+      "kernel_count": 46,
+      "full_model_kernel_us": 691170.8099999999,
+      "conservative_stage_kernel_us": 690400.965,
+      "conservative_stage_hotspot_pct": 99.88861725801182,
+      "stage_kernel_types": [
+        "Div",
+        "Index",
+        "MaskedFill",
+        "Mul",
+        "ReduceSum",
+        "ReduceV2",
+        "Softmax",
+        "SoftmaxV2",
+        "Sqrt"
+      ],
+      "by_type": [
+        {
+          "type": "Index",
+          "count": 10,
+          "duration_us": 687574.041,
+          "full_model_ratio": 0.9947961213813413
+        },
+        {
+          "type": "Mul",
+          "count": 6,
+          "duration_us": 1416.5320000000002,
+          "full_model_ratio": 0.0020494673378929303
+        },
+        {
+          "type": "ReduceSum",
+          "count": 4,
+          "duration_us": 1040.899,
+          "full_model_ratio": 0.0015059938656842293
+        },
+        {
+          "type": "MatMulV2",
+          "count": 1,
+          "duration_us": 487.79,
+          "full_model_ratio": 0.000705744503301579
+        },
+        {
+          "type": "SoftmaxV2",
+          "count": 2,
+          "duration_us": 207.596,
+          "full_model_ratio": 0.000300354119410801
+        },
+        {
+          "type": "MaskedFill",
+          "count": 4,
+          "duration_us": 161.897,
+          "full_model_ratio": 0.00023423587578879382
+        },
+        {
+          "type": "TensorMove",
+          "count": 4,
+          "duration_us": 77.138,
+          "full_model_ratio": 0.00011160482891342013
+        },
+        {
+          "type": "LogicalNot",
+          "count": 4,
+          "duration_us": 54.139,
+          "full_model_ratio": 7.832940745862808e-05
+        },
+        {
+          "type": "LpNormV2",
+          "count": 2,
+          "duration_us": 47.617999999999995,
+          "full_model_ratio": 6.889469189244263e-05
+        },
+        {
+          "type": "MatMulV3",
+          "count": 1,
+          "duration_us": 36.9,
+          "full_model_ratio": 5.338767127622187e-05
+        },
+        {
+          "type": "ClipByValueV2",
+          "count": 2,
+          "duration_us": 22.880000000000003,
+          "full_model_ratio": 3.310324983197714e-05
+        },
+        {
+          "type": "BroadcastTo",
+          "count": 2,
+          "duration_us": 21.740000000000002,
+          "full_model_ratio": 3.145387462181744e-05
+        },
+        {
+          "type": "RealDiv",
+          "count": 2,
+          "duration_us": 13.84,
+          "full_model_ratio": 2.0023993779482674e-05
+        },
+        {
+          "type": "Relu",
+          "count": 1,
+          "duration_us": 6.4,
+          "full_model_ratio": 9.259650302650947e-06
+        },
+        {
+          "type": "Fill",
+          "count": 1,
+          "duration_us": 1.4,
+          "full_model_ratio": 2.0255485037048947e-06
+        },
+        {
+          "type": "Sqrt",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        },
+        {
+          "type": "Softmax",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        },
+        {
+          "type": "ReduceV2",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        },
+        {
+          "type": "Div",
+          "count": 0,
+          "duration_us": 0.0,
+          "full_model_ratio": 0.0
+        }
+      ]
+    }
+  ]
+}

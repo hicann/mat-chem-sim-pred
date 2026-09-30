@@ -1,0 +1,10 @@
+add_executable(test_csr_agnn_cosine_attention_aggregate_fused
+    test_csr_agnn_cosine_attention_aggregate_fused.cpp)
+target_include_directories(test_csr_agnn_cosine_attention_aggregate_fused PRIVATE
+    ${ASCEND_CANN_PACKAGE_PATH}/include ../../op_host)
+target_link_directories(test_csr_agnn_cosine_attention_aggregate_fused PRIVATE
+    ${ASCEND_CANN_PACKAGE_PATH}/lib64)
+target_link_libraries(test_csr_agnn_cosine_attention_aggregate_fused PRIVATE
+    csr_agnn_cosine_attention_aggregate_fused_host ascendcl)
+add_test(NAME csr_agnn_cosine_attention_aggregate_smoke
+    COMMAND test_csr_agnn_cosine_attention_aggregate_fused 0)
