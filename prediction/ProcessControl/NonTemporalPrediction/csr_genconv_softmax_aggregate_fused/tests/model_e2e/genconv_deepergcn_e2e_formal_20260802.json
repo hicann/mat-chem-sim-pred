@@ -1,0 +1,51 @@
+{
+  "model": "8-layer PyG DeeperGCN with exact GENConv weights",
+  "dataset": "Cora",
+  "checkpoint_sha256": "d194466af62f8e1666bf8c64d7f28159029b8802d90d7d36f365922445ad4442",
+  "checkpoint_epochs": 80,
+  "baseline": "all-NPU padded GENConv message/softmax aggregate",
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges": 13264,
+      "baseline_e2e_ms": 146.09280391596258,
+      "custom_e2e_ms": 4.605588968843222,
+      "e2e_speedup": 31.720764684881654,
+      "e2e_reduction_pct": 96.84749087881666,
+      "max_model_abs_error": 1.9073486328125e-06,
+      "prediction_agreement": 1.0,
+      "baseline_test_accuracy": 0.7009999752044678,
+      "custom_test_accuracy": 0.7009999752044678,
+      "exact_pyg_reference_max_error": 0.011257648468017578
+    },
+    {
+      "copies": 2,
+      "nodes": 5416,
+      "edges": 26528,
+      "baseline_e2e_ms": 272.47461793012917,
+      "custom_e2e_ms": 4.524603020399809,
+      "e2e_speedup": 60.22066835513282,
+      "e2e_reduction_pct": 98.33944054871193,
+      "max_model_abs_error": 2.384185791015625e-06,
+      "prediction_agreement": 1.0,
+      "baseline_test_accuracy": 0.7010000348091125,
+      "custom_test_accuracy": 0.7010000348091125,
+      "exact_pyg_reference_max_error": null
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges": 53056,
+      "baseline_e2e_ms": 566.4279699558392,
+      "custom_e2e_ms": 7.27306748740375,
+      "e2e_speedup": 77.880202670584,
+      "e2e_reduction_pct": 98.71597663371553,
+      "max_model_abs_error": 2.384185791015625e-06,
+      "prediction_agreement": 0.9999999403953552,
+      "baseline_test_accuracy": 0.7009999752044678,
+      "custom_test_accuracy": 0.7009999752044678,
+      "exact_pyg_reference_max_error": null
+    }
+  ]
+}

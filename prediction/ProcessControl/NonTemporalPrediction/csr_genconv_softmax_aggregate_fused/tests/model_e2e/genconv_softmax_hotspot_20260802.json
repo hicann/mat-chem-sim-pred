@@ -1,0 +1,71 @@
+{
+  "model": "PyG DeeperGCN with exact GENConv and DeepGCNLayer calls",
+  "dataset": "Cora",
+  "dataset_nodes": 2708,
+  "dataset_edges_with_self_loops": 13264,
+  "device": "Ascend910B3",
+  "torch_version": "2.5.0",
+  "torch_geometric_version": "2.9.0",
+  "results": [
+    {
+      "copies": 1,
+      "num_nodes": 2708,
+      "num_edges": 13264,
+      "num_layers": 8,
+      "full_model_ms": 510.4369129985571,
+      "propagate_total_ms": 494.3404267542064,
+      "propagate_hotspot_pct": 96.84652778150546,
+      "per_layer_propagate_ms": [
+        74.53616056591272,
+        83.75169790815562,
+        49.496739520691335,
+        53.879371960647404,
+        52.225288935005665,
+        69.62349801324308,
+        58.887694496661425,
+        51.93997535388917
+      ],
+      "repeat_max_abs_error": 0.0
+    },
+    {
+      "copies": 2,
+      "num_nodes": 5416,
+      "num_edges": 26528,
+      "num_layers": 8,
+      "full_model_ms": 529.1951509425417,
+      "propagate_total_ms": 459.5106764463708,
+      "propagate_hotspot_pct": 86.83198922513616,
+      "per_layer_propagate_ms": [
+        50.696502439677715,
+        59.02598553802818,
+        59.17246255557984,
+        60.195558005943894,
+        62.74733494501561,
+        59.14214695803821,
+        50.8629895048216,
+        57.66769649926573
+      ],
+      "repeat_max_abs_error": 0.0
+    },
+    {
+      "copies": 4,
+      "num_nodes": 10832,
+      "num_edges": 53056,
+      "num_layers": 8,
+      "full_model_ms": 578.3578925766051,
+      "propagate_total_ms": 611.6875695297495,
+      "propagate_hotspot_pct": 105.76281181270986,
+      "per_layer_propagate_ms": [
+        71.96900248527527,
+        79.41303693223745,
+        79.97745811007917,
+        83.85105349589139,
+        71.00207800976932,
+        76.9565609516576,
+        71.90632203128189,
+        76.61205751355737
+      ],
+      "repeat_max_abs_error": 0.03453618288040161
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "scope": "same-host GENConv complete-model value gate",
+  "model": "eight-layer PyG DeeperGCN with exact GENConv weights",
+  "dataset": "Cora",
+  "checkpoint_sha256": "d194466af62f8e1666bf8c64d7f28159029b8802d90d7d36f365922445ad4442",
+  "checkpoint_origin": "fixed-seed locally trained; not an official checkpoint",
+  "environment": {
+    "hostname": "node202",
+    "machine": "aarch64",
+    "logical_cpu_count": 192,
+    "torch_version": "2.5.0",
+    "torch_geometric_version": "2.9.0",
+    "npu": "Ascend910B3"
+  },
+  "timing": {
+    "warmup": 3,
+    "iterations": 10,
+    "statistic": "median wall time",
+    "synchronization": "before and after every measured NPU forward",
+    "cpu_boundary": "official PyG model forward, CPU input to CPU logits",
+    "resident_npu_boundary": "resident model, graph, input and output",
+    "host_to_host_boundary": "CPU feature input through H2D, full model, and D2H logits; static graph and model weights remain resident"
+  },
+  "baseline_policy": "minimum correct resident NPU latency among official PyG eager, global maximum-degree padding, and power-of-two degree buckets",
+  "torchair": {
+    "status": "not_measured",
+    "reason": "official PyG scatter_reduce/index_copy path was not compiled in this run"
+  },
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges": 13264,
+      "global_padding_ratio": 34.50331724969843,
+      "power2_bucket_padding_ratio": 1.308956574185766,
+      "cpu_official_pyg_e2e_ms_by_threads": {
+        "1": 497.3520035855472,
+        "4": 648.971131304279,
+        "8": 567.5094798207283,
+        "16": 554.1284519713372
+      },
+      "fastest_cpu_threads": 1,
+      "fastest_cpu_e2e_ms": 497.3520035855472,
+      "resident_npu_e2e_ms": {
+        "custom": 4.569520242512226,
+        "power2_degree_bucketed": 20.592807326465845,
+        "global_max_degree_padded": 137.48964108526707,
+        "official_pyg_eager": 51.28342751413584
+      },
+      "strongest_native_npu": "power2_degree_bucketed",
+      "strongest_native_npu_e2e_ms": 20.592807326465845,
+      "custom_vs_strongest_npu_speedup": 4.50655785149654,
+      "custom_vs_strongest_npu_reduction_pct": 77.81011510441567,
+      "host_to_host_e2e_ms": {
+        "power2_degree_bucketed": 22.078379523009062,
+        "custom": 5.9235901571810246
+      },
+      "custom_host_to_host_vs_cpu_ratio": 0.011910256949758393,
+      "custom_host_to_host_vs_cpu_reduction_pct": 98.80897430502417,
+      "max_abs_error_vs_cpu_official": 2.86102294921875e-06,
+      "max_abs_error_bucketed_vs_cpu_official": 2.86102294921875e-06,
+      "max_abs_error_global_padded_vs_cpu_official": 2.86102294921875e-06,
+      "prediction_agreement_vs_cpu_official": 1.0,
+      "cpu_test_accuracy": 0.7009999752044678,
+      "custom_test_accuracy": 0.7009999752044678,
+      "host_output_max_abs_error_vs_cpu_official": 2.86102294921875e-06
+    },
+    {
+      "copies": 2,
+      "nodes": 5416,
+      "edges": 26528,
+      "global_padding_ratio": 34.50331724969843,
+      "power2_bucket_padding_ratio": 1.308956574185766,
+      "cpu_official_pyg_e2e_ms_by_threads": {
+        "1": 847.1957296133041,
+        "4": 787.8510830923915,
+        "8": 597.5600576493889,
+        "16": 573.0720669962466
+      },
+      "fastest_cpu_threads": 16,
+      "fastest_cpu_e2e_ms": 573.0720669962466,
+      "resident_npu_e2e_ms": {
+        "custom": 4.56469994969666,
+        "power2_degree_bucketed": 19.69492295756936,
+        "global_max_degree_padded": 252.60525499470532,
+        "official_pyg_eager": 80.95619594678283
+      },
+      "strongest_native_npu": "power2_degree_bucketed",
+      "strongest_native_npu_e2e_ms": 19.69492295756936,
+      "custom_vs_strongest_npu_speedup": 4.314615018425944,
+      "custom_vs_strongest_npu_reduction_pct": 76.82296112794741,
+      "host_to_host_e2e_ms": {
+        "power2_degree_bucketed": 24.178072810173035,
+        "custom": 7.094512926414609
+      },
+      "custom_host_to_host_vs_cpu_ratio": 0.012379791888305517,
+      "custom_host_to_host_vs_cpu_reduction_pct": 98.76202081116945,
+      "max_abs_error_vs_cpu_official": 3.337860107421875e-06,
+      "max_abs_error_bucketed_vs_cpu_official": 3.337860107421875e-06,
+      "max_abs_error_global_padded_vs_cpu_official": 3.337860107421875e-06,
+      "prediction_agreement_vs_cpu_official": 1.0,
+      "cpu_test_accuracy": 0.7009999752044678,
+      "custom_test_accuracy": 0.7009999752044678,
+      "host_output_max_abs_error_vs_cpu_official": 3.337860107421875e-06
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges": 53056,
+      "global_padding_ratio": 34.50331724969843,
+      "power2_bucket_padding_ratio": 1.308956574185766,
+      "cpu_official_pyg_e2e_ms_by_threads": {
+        "1": 1650.961654027924,
+        "4": 954.4457767624408,
+        "8": 816.7391922324896,
+        "16": 698.8058974966407
+      },
+      "fastest_cpu_threads": 16,
+      "fastest_cpu_e2e_ms": 698.8058974966407,
+      "resident_npu_e2e_ms": {
+        "custom": 7.378031965345144,
+        "power2_degree_bucketed": 18.45215423963964,
+        "global_max_degree_padded": 607.4157715775073,
+        "official_pyg_eager": 136.68071199208498
+      },
+      "strongest_native_npu": "power2_degree_bucketed",
+      "strongest_native_npu_e2e_ms": 18.45215423963964,
+      "custom_vs_strongest_npu_speedup": 2.5009588364905446,
+      "custom_vs_strongest_npu_reduction_pct": 60.01533550215309,
+      "host_to_host_e2e_ms": {
+        "power2_degree_bucketed": 22.210965398699045,
+        "custom": 10.59504714794457
+      },
+      "custom_host_to_host_vs_cpu_ratio": 0.015161645295066363,
+      "custom_host_to_host_vs_cpu_reduction_pct": 98.48383547049336,
+      "max_abs_error_vs_cpu_official": 3.337860107421875e-06,
+      "max_abs_error_bucketed_vs_cpu_official": 3.337860107421875e-06,
+      "max_abs_error_global_padded_vs_cpu_official": 2.86102294921875e-06,
+      "prediction_agreement_vs_cpu_official": 1.0,
+      "cpu_test_accuracy": 0.7009999752044678,
+      "custom_test_accuracy": 0.7009999752044678,
+      "host_output_max_abs_error_vs_cpu_official": 3.337860107421875e-06
+    }
+  ]
+}

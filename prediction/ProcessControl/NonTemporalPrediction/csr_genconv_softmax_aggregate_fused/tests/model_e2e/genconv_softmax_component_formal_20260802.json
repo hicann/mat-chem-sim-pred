@@ -1,0 +1,40 @@
+{
+  "model_stage": "PyG GENConv message + feature-wise softmax aggregate",
+  "dataset": "Cora",
+  "baseline": "all-NPU padded gather, stable softmax, weighted reduction",
+  "results": [
+    {
+      "copies": 1,
+      "nodes": 2708,
+      "edges": 13264,
+      "channels": 64,
+      "max_degree": 169,
+      "native_all_npu_ms": 17.361224512569606,
+      "custom_ms": 0.36549894139170647,
+      "speedup": 47.50006784277802,
+      "max_abs_error": 3.725290298461914e-08
+    },
+    {
+      "copies": 2,
+      "nodes": 5416,
+      "edges": 26528,
+      "channels": 64,
+      "max_degree": 169,
+      "native_all_npu_ms": 40.74386856518686,
+      "custom_ms": 0.5701165646314621,
+      "speedup": 71.46585644555817,
+      "max_abs_error": 3.725290298461914e-08
+    },
+    {
+      "copies": 4,
+      "nodes": 10832,
+      "edges": 53056,
+      "channels": 64,
+      "max_degree": 169,
+      "native_all_npu_ms": 70.83523296751082,
+      "custom_ms": 0.9095149580389261,
+      "speedup": 77.88242770657011,
+      "max_abs_error": 3.725290298461914e-08
+    }
+  ]
+}
