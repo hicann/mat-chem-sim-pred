@@ -1,0 +1,10 @@
+{
+  "graphs": 223,
+  "cpu_accuracy": 0.7488789237668162,
+  "resident_npu_accuracy": 0.7488789237668162,
+  "custom_npu_accuracy": 0.7488789237668162,
+  "cpu_custom_prediction_agreement": 0.9910313901345291,
+  "resident_custom_prediction_agreement": 1.0,
+  "cpu_custom_logits_max_abs_diff": 0.1467123031616211,
+  "resident_custom_logits_max_abs_diff": 0.0
+}
