@@ -142,6 +142,13 @@ main() {
         return $?
     fi
 
+    if [ "$REFERENCE_TEST" = true ]; then
+        [ -n "$COMMON_DIRS" ] || COMMON_DIRS="${DEFAULT_COMMON_DIRS[*]:-}"
+        # 位置参数是前缀过滤（如 prediction/ProcessControl/），与旧实现一致
+        run_reference_tests "$FILELIST" "${OPERATORS[0]:-}" "$COMMON_DIRS"
+        return $?
+    fi
+
     if [ -n "$OPS_BY_NAME" ]; then
         local name resolved
         IFS=',' read -ra name_arr <<< "$OPS_BY_NAME"
@@ -158,13 +165,6 @@ main() {
 
     if [ -n "$FILELIST" ] || [ "$BUILD_ALL" = true ] || [ ${#OPERATORS[@]} -gt 0 ]; then
         run_build
-        return $?
-    fi
-
-    if [ "$REFERENCE_TEST" = true ]; then
-        [ -n "$COMMON_DIRS" ] || COMMON_DIRS="${DEFAULT_COMMON_DIRS[*]:-}"
-        # 位置参数是前缀过滤（如 prediction/ProcessControl/），与旧实现一致
-        run_reference_tests "$FILELIST" "${OPERATORS[0]:-}" "$COMMON_DIRS"
         return $?
     fi
 
