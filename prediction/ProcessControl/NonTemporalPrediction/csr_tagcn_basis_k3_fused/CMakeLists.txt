@@ -1,5 +1,10 @@
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
-# Licensed under the CANN Open Software License Agreement Version 2.0.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
 # 工具链由顶层 CMakeLists.txt 经 cmake/op_prelude.cmake + cmake/operator.cmake 提供；
 # 本文件只声明"本算子是哪种形态"，形态定义在 cmake/operator.cmake 里，
 # 不 include 单元目录外的路径、不做 project 声明、不探测 CANN（CodeCheck 要求）。
