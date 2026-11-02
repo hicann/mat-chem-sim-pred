@@ -4,18 +4,18 @@
  */
 #include <vector>
 
-#include "../../example_common.h"
+#include "../../attention_example_common.h"
 #include "csr_gatv2_dynamic_attention_aggregate_fused_host.h"
 
 int main(int argc, char** argv)
 {
     int deviceId = 0;
-    if (!ExampleCommon::ParseDevice(argc, argv, &deviceId))
+    if (!AttentionExample::ParseDevice(argc, argv, &deviceId))
     {
         return 1;
     }
-    ExampleCommon::Runtime acl(deviceId);
-    ExampleCommon::Buffers memory;
+    AttentionExample::Runtime acl(deviceId);
+    AttentionExample::Buffers memory;
     const std::vector<int32_t> row{0, 1, 2};
     const std::vector<int32_t> source{1, 0};
     const std::vector<float> left{1.0F, 2.0F, 3.0F, 4.0F};
@@ -37,9 +37,9 @@ int main(int argc, char** argv)
     const int32_t launchResult =
         aclnnCsrGatv2DynamicAttentionAggregateFused(rowDevice, sourceDevice, leftDevice, rightDevice, attentionDevice,
                                                     outputDevice, 2, 2, 1, 2, 1, 0.2F, workspace, bytes, acl.Stream());
-    ExampleCommon::Check(launchResult, "GATv2 launch");
-    ExampleCommon::Check(aclrtSynchronizeStream(acl.Stream()), "GATv2 synchronize");
-    ExampleCommon::CopyOutput(&actual, outputDevice);
-    passed = passed && ExampleCommon::Matches(actual, expected, 1.0e-4F);
+    AttentionExample::Check(launchResult, "GATv2 launch");
+    AttentionExample::Check(aclrtSynchronizeStream(acl.Stream()), "GATv2 synchronize");
+    AttentionExample::CopyOutput(&actual, outputDevice);
+    passed = passed && AttentionExample::Matches(actual, expected, 1.0e-4F);
     return passed ? 0 : 1;
 }

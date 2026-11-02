@@ -2,7 +2,7 @@
 // Licensed under the CANN Open Software License Agreement Version 2.0.
 #pragma once
 
-#include <acl/acl.h>
+#include "example_common.h"
 
 #include <cmath>
 #include <cstdint>
@@ -13,14 +13,7 @@
 
 namespace AclSmoke
 {
-inline void Check(aclError error, const char* operation)
-{
-    if (error != ACL_SUCCESS)
-    {
-        std::fprintf(stderr, "%s failed: %d\n", operation, static_cast<int>(error));
-        std::exit(1);
-    }
-}
+using ExampleCommon::Check;
 
 inline void CopyIn(void** device, const void* host, size_t bytes)
 {
@@ -28,28 +21,17 @@ inline void CopyIn(void** device, const void* host, size_t bytes)
     Check(aclrtMemcpy(*device, bytes, host, bytes, ACL_MEMCPY_HOST_TO_DEVICE), "copy");
 }
 
+// 复用 example_common.h 的 Runtime：aclInit / SetDevice / CreateStream 与析构顺序一致，
+// 只是多了一层"从 argv 取 device"的适配。
 class Session
 {
    public:
-    Session(int argc, char** argv) : device_(argc > 1 ? std::atoi(argv[1]) : 0)
-    {
-        Check(aclInit(nullptr), "aclInit");
-        Check(aclrtSetDevice(device_), "aclrtSetDevice");
-        Check(aclrtCreateStream(&stream_), "create stream");
-    }
+    explicit Session(int argc, char** argv) : runtime_(argc > 1 ? std::atoi(argv[1]) : 0) {}
 
-    ~Session()
-    {
-        aclrtDestroyStream(stream_);
-        aclrtResetDevice(device_);
-        aclFinalize();
-    }
-
-    aclrtStream Stream() const { return stream_; }
+    aclrtStream Stream() const { return runtime_.Stream(); }
 
    private:
-    int device_;
-    aclrtStream stream_ = nullptr;
+    ExampleCommon::Runtime runtime_;
 };
 
 class Buffer

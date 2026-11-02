@@ -7,11 +7,11 @@
 #include <cstdlib>
 #include <vector>
 
-#include "../../../acl_smoke_common.h"
+#include "../../../acl_smoke_helpers.h"
 #include "dimenet_triplet_enumerate_fused_host.h"
 
-using AclSmoke::Check;
-using AclSmoke::CopyIn;
+using MolecularGeometrySmoke::Check;
+using MolecularGeometrySmoke::CopyIn;
 
 bool CheckEnumeration(const std::vector<int32_t>& idxI, const std::vector<int32_t>& idxJ,
                       const std::vector<int32_t>& idxK, const std::vector<int32_t>& idxKj,
@@ -23,9 +23,9 @@ bool CheckEnumeration(const std::vector<int32_t>& idxI, const std::vector<int32_
 
 void CopyOutputs(std::vector<int32_t>& host, void* device)
 {
-    AclSmoke::Check(aclrtMemcpy(host.data(), host.size() * sizeof(int32_t), device,
-                                host.size() * sizeof(int32_t), ACL_MEMCPY_DEVICE_TO_HOST),
-                    "copy out");
+    MolecularGeometrySmoke::Check(aclrtMemcpy(host.data(), host.size() * sizeof(int32_t), device,
+                                              host.size() * sizeof(int32_t), ACL_MEMCPY_DEVICE_TO_HOST),
+                                  "copy out");
 }
 
 int RunSmoke(int device)

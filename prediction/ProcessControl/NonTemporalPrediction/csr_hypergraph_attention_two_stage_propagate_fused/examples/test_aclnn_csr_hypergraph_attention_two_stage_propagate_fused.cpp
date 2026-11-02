@@ -4,29 +4,29 @@
  */
 #include <array>
 
-#include "../../acl_smoke_common.h"
+#include "../../sparse_acl_smoke_helpers.h"
 #include "csr_hypergraph_attention_two_stage_propagate_fused_host.h"
 
 namespace
 {
-int RunSmoke(AclSmoke::Session& session)
+int RunSmoke(SparseSmoke::Session& session)
 {
     const std::vector<int32_t> edgeRow{0, 2, 4}, nodeIndex{0, 1, 1, 2};
     const std::vector<int32_t> nodeRow{0, 1, 3, 4}, edgeIndex{0, 0, 1, 1}, position{0, 1, 2, 3};
     const std::vector<float> edgeScale{0.5F, 0.5F}, nodeScale{1.0F, 0.5F, 1.0F};
     const std::vector<float> features{2.0F, 4.0F, 6.0F}, logits(4, 0.0F), expected{0.75F, 1.0F, 1.25F};
     std::vector<float> output(3, 0.0F);
-    AclSmoke::Buffer edgeRowData(edgeRow.size() * sizeof(int32_t));
-    AclSmoke::Buffer nodeIndexData(nodeIndex.size() * sizeof(int32_t));
-    AclSmoke::Buffer edgeScaleData(edgeScale.size() * sizeof(float));
-    AclSmoke::Buffer nodeRowData(nodeRow.size() * sizeof(int32_t)),
+    SparseSmoke::Buffer edgeRowData(edgeRow.size() * sizeof(int32_t));
+    SparseSmoke::Buffer nodeIndexData(nodeIndex.size() * sizeof(int32_t));
+    SparseSmoke::Buffer edgeScaleData(edgeScale.size() * sizeof(float));
+    SparseSmoke::Buffer nodeRowData(nodeRow.size() * sizeof(int32_t)),
         edgeIndexData(edgeIndex.size() * sizeof(int32_t));
-    AclSmoke::Buffer positionData(position.size() * sizeof(int32_t)),
+    SparseSmoke::Buffer positionData(position.size() * sizeof(int32_t)),
         nodeScaleData(nodeScale.size() * sizeof(float));
-    AclSmoke::Buffer featureData(features.size() * sizeof(float)), logitsData(logits.size() * sizeof(float));
-    AclSmoke::Buffer outputData(output.size() * sizeof(float));
+    SparseSmoke::Buffer featureData(features.size() * sizeof(float)), logitsData(logits.size() * sizeof(float));
+    SparseSmoke::Buffer outputData(output.size() * sizeof(float));
     const uint64_t bytes = aclnnCsrHypergraphAttentionTwoStagePropagateFusedGetWorkspaceSize(3, 2, 4, 1, 1, 2, 2);
-    AclSmoke::Buffer workspace(bytes);
+    SparseSmoke::Buffer workspace(bytes);
     edgeRowData.CopyFrom(edgeRow);
     nodeIndexData.CopyFrom(nodeIndex);
     edgeScaleData.CopyFrom(edgeScale);
@@ -36,20 +36,20 @@ int RunSmoke(AclSmoke::Session& session)
     nodeScaleData.CopyFrom(nodeScale);
     featureData.CopyFrom(features);
     logitsData.CopyFrom(logits);
-    AclSmoke::Check(
+    SparseSmoke::Check(
         aclnnCsrHypergraphAttentionTwoStagePropagateFused(
             edgeRowData.Data(), nodeIndexData.Data(), edgeScaleData.Data(), nodeRowData.Data(), edgeIndexData.Data(),
             positionData.Data(), nodeScaleData.Data(), featureData.Data(), logitsData.Data(), outputData.Data(), 3, 2,
             4, 1, 1, 2, 2, 0, 0.2F, workspace.Data(), workspace.Size(), session.Stream()),
         "launch");
-    AclSmoke::Check(aclrtSynchronizeStream(session.Stream()), "synchronize");
+    SparseSmoke::Check(aclrtSynchronizeStream(session.Stream()), "synchronize");
     outputData.CopyTo(output);
-    return AclSmoke::Validate(output, expected);
+    return SparseSmoke::Validate(output, expected);
 }
 }  // namespace
 
 int main(int argc, char** argv)
 {
-    AclSmoke::Session session(argc, argv);
+    SparseSmoke::Session session(argc, argv);
     return RunSmoke(session);
 }

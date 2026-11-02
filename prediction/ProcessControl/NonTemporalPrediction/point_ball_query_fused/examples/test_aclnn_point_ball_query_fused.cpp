@@ -5,18 +5,18 @@
 #include <cstdint>
 #include <vector>
 
-#include "../../example_common.h"
+#include "../../pointnet2_geometry_example_common.h"
 #include "point_ball_query_fused_host.h"
 
 int main(int argc, char** argv)
 {
     int device = 0;
-    if (!ExampleCommon::ParseDevice(argc, argv, &device))
+    if (!PointNet2GeometryExample::ParseDevice(argc, argv, &device))
     {
         return 1;
     }
-    ExampleCommon::Runtime runtime(device);
-    ExampleCommon::Buffers buffers;
+    PointNet2GeometryExample::Runtime runtime(device);
+    PointNet2GeometryExample::Buffers buffers;
     const std::vector<float> points = {0, 0, 0, 1, 0, 0, 3, 0, 0};
     const std::vector<float> queries = {0, 0, 0, 2, 0, 0};
     std::vector<int32_t> indices(4, -1);
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
     void* deviceCounts = buffers.Allocate(counts.size() * sizeof(int32_t));
     const uint64_t workspaceSize = aclnnPointBallQueryFusedGetWorkspaceSize(1, 3, 2, 2);
     void* workspace = buffers.Allocate(workspaceSize);
-    ExampleCommon::Check(
+    PointNet2GeometryExample::Check(
         aclnnPointBallQueryFused(devicePoints, deviceQueries, deviceIndices, deviceCounts, 1, 3, 2, 2, 1.1F, workspace,
                                  workspaceSize, runtime.Stream()),
         "launch");
