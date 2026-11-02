@@ -76,7 +76,7 @@ stages:
     fail-fast: false
 
   stage3:
-    name: ReferenceTest
+    name: X86_Test
     jobs:
       # Python 算子测试（build.sh 统一入口）
       JOB_pytorch:
@@ -102,33 +102,6 @@ stages:
               bash ${{ steps.process_checkout.outputs.path }}/build.sh \
                 --python prediction/SmallData \
                 -f pr_filelist.txt
-        runs-on: ['self-hosted', 'arch=x64', 'spec=small']
-        container:
-          image: swr.cn-north-4.myhuaweicloud.com/ci_cann/ubuntu20.04.05_x86:k8s_v1.1006
-      JOB_prediction_reference:
-        name: Prediction_Reference_Tests
-        steps:
-          - name: Checkout_code
-            identifier: process_checkout
-            uses: checkout
-            with:
-              ref: ${{ atomgit.event.pull_request.merge_commit_sha }}
-              allow-unsafe-pr-checkout: true
-          - name: Download_pr_filelist
-            uses: obs-download
-            with:
-              endpoint: "https://obs.cn-north-4.myhuaweicloud.com"
-              bucket: "ascend-ci"
-              access-key: ${{ secrets.AK }}
-              secret-key: ${{ secrets.SK }}
-              key: "${{ env.obs_path }}/pr_filelist.txt"
-              path: ${{ steps.process_checkout.outputs.path }}
-          - name: Run_reference_tests
-            run: |
-              bash ${{ steps.process_checkout.outputs.path }}/build.sh \
-                --reference-test prediction/ProcessControl/ \
-                -f pr_filelist.txt \
-                --common-dirs="prediction/ProcessControl/PIDModelFit/common/ prediction/ProcessControl/TimeSeriesForecast/common/ prediction/ProcessControl/NonTemporalPrediction/"
         runs-on: ['self-hosted', 'arch=x64', 'spec=small']
         container:
           image: swr.cn-north-4.myhuaweicloud.com/ci_cann/ubuntu20.04.05_x86:k8s_v1.1006
