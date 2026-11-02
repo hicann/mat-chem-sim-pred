@@ -4,7 +4,7 @@
  */
 #include <vector>
 
-#include "../../attention_example_common.h"
+#include "../../example_common.h"
 #include "csr_transformer_dot_attention_aggregate_fused_host.h"
 
 namespace
@@ -22,12 +22,12 @@ struct Inputs
 int main(int argc, char** argv)
 {
     int selectedDevice = 0;
-    if (!AttentionExample::ParseDevice(argc, argv, &selectedDevice))
+    if (!ExampleCommon::ParseDevice(argc, argv, &selectedDevice))
     {
         return 1;
     }
-    AttentionExample::Runtime context(selectedDevice);
-    AttentionExample::Buffers allocations;
+    ExampleCommon::Runtime context(selectedDevice);
+    ExampleCommon::Buffers allocations;
     const Inputs input;
     const std::vector<float> expected{7.0F, 8.0F, 5.0F, 6.0F};
     std::vector<float> output(expected.size(), 0.0F);
@@ -42,12 +42,12 @@ int main(int argc, char** argv)
     bool passed = aclnnCsrTransformerDotAttentionAggregateFused(row, source, query, key, value, result, 2, 2, 1, 2, 257,
                                                                 workspace, workspaceSize,
                                                                 context.Stream()) == ACL_ERROR_INVALID_PARAM;
-    AttentionExample::Check(
+    ExampleCommon::Check(
         aclnnCsrTransformerDotAttentionAggregateFused(row, source, query, key, value, result, 2, 2, 1, 2, 1, workspace,
                                                       workspaceSize, context.Stream()),
         "Transformer attention launch");
-    AttentionExample::Check(aclrtSynchronizeStream(context.Stream()), "Transformer synchronize");
-    AttentionExample::CopyOutput(&output, result);
-    passed = passed && AttentionExample::Matches(output, expected, 1.0e-4F);
+    ExampleCommon::Check(aclrtSynchronizeStream(context.Stream()), "Transformer synchronize");
+    ExampleCommon::CopyOutput(&output, result);
+    passed = passed && ExampleCommon::Matches(output, expected, 1.0e-4F);
     return passed ? 0 : 1;
 }

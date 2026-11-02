@@ -5,18 +5,18 @@
 #include <cstdio>
 #include <vector>
 
-#include "../../attention_example_common.h"
+#include "../../example_common.h"
 #include "csr_gat_attention_aggregate_fused_host.h"
 
 int main(int argc, char** argv)
 {
     int device = 0;
-    if (!AttentionExample::ParseDevice(argc, argv, &device))
+    if (!ExampleCommon::ParseDevice(argc, argv, &device))
     {
         return 1;
     }
-    AttentionExample::Runtime runtime(device);
-    AttentionExample::Buffers buffers;
+    ExampleCommon::Runtime runtime(device);
+    ExampleCommon::Buffers buffers;
     const std::vector<int32_t> rowPtr{0, 2, 3};
     const std::vector<int32_t> source{0, 1, 0};
     const std::vector<float> projected{1.0F, 3.0F};
@@ -35,13 +35,13 @@ int main(int argc, char** argv)
     bool passed = aclnnCsrGatAttentionAggregateFused(dRow, dSource, dProjected, dAttentionSource, dAttentionTarget,
                                                      dOutput, 2, 3, 1, 1, 257, 0.2F, workspace, workspaceSize,
                                                      runtime.Stream()) == ACL_ERROR_INVALID_PARAM;
-    AttentionExample::Check(
+    ExampleCommon::Check(
         aclnnCsrGatAttentionAggregateFused(dRow, dSource, dProjected, dAttentionSource, dAttentionTarget, dOutput, 2, 3,
                                            1, 1, 2, 0.2F, workspace, workspaceSize, runtime.Stream()),
         "launch");
-    AttentionExample::Check(aclrtSynchronizeStream(runtime.Stream()), "synchronize");
-    AttentionExample::CopyOutput(&output, dOutput);
-    passed = passed && AttentionExample::Matches(output, expected, 1.0e-5F);
+    ExampleCommon::Check(aclrtSynchronizeStream(runtime.Stream()), "synchronize");
+    ExampleCommon::CopyOutput(&output, dOutput);
+    passed = passed && ExampleCommon::Matches(output, expected, 1.0e-5F);
     if (passed)
     {
         std::puts("PASSED");

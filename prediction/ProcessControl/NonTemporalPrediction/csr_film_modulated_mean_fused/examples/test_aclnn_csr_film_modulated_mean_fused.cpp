@@ -5,18 +5,18 @@
 #include <cstdint>
 #include <vector>
 
-#include "../../graph_message_example_common.h"
+#include "../../example_common.h"
 #include "csr_film_modulated_mean_fused_host.h"
 
 int main(int argc, char** argv)
 {
     int device = 0;
-    if (!GraphMessageExample::ParseDevice(argc, argv, &device))
+    if (!ExampleCommon::ParseDevice(argc, argv, &device))
     {
         return 1;
     }
-    GraphMessageExample::Runtime runtime(device);
-    GraphMessageExample::Buffers buffers;
+    ExampleCommon::Runtime runtime(device);
+    ExampleCommon::Buffers buffers;
     const std::vector<int32_t> rowPtr{0, 2, 3, 3};
     const std::vector<int32_t> source{0, 1, 0};
     const std::vector<float> projected{1, -2, 3, 4, 5, 6};
@@ -34,10 +34,10 @@ int main(int argc, char** argv)
     void* workspace = buffers.Allocate(workspaceSize);
     bool passed = aclnnCsrFilmModulatedMeanFused(dRow, dSource, dProjected, dBeta, dGamma, dOutput, 3, 3, 513, 2, 1,
                                                  workspace, workspaceSize, runtime.Stream()) == ACL_ERROR_INVALID_PARAM;
-    GraphMessageExample::Check(aclnnCsrFilmModulatedMeanFused(dRow, dSource, dProjected, dBeta, dGamma, dOutput, 3, 3,
+    ExampleCommon::Check(aclnnCsrFilmModulatedMeanFused(dRow, dSource, dProjected, dBeta, dGamma, dOutput, 3, 3,
                                                               2, 2, 1, workspace, workspaceSize, runtime.Stream()),
                                "launch");
-    GraphMessageExample::CopyOut(&output, dOutput, runtime.Stream());
-    passed &= GraphMessageExample::Matches(output, expected);
+    ExampleCommon::CopyOut(&output, dOutput, runtime.Stream());
+    passed &= ExampleCommon::Matches(output, expected);
     return passed ? 0 : 1;
 }

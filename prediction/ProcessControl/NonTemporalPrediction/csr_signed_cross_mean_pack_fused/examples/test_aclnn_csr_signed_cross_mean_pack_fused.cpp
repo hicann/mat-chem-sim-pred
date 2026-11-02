@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "../../graph_message_example_common.h"
+#include "../../example_common.h"
 #include "csr_signed_cross_mean_pack_fused_host.h"
 
 namespace
@@ -38,12 +38,12 @@ std::vector<float> BuildExpected(int channels)
 int main(int argc, char** argv)
 {
     int device = 0;
-    if (!GraphMessageExample::ParseDevice(argc, argv, &device))
+    if (!ExampleCommon::ParseDevice(argc, argv, &device))
     {
         return 1;
     }
-    GraphMessageExample::Runtime runtime(device);
-    GraphMessageExample::Buffers buffers;
+    ExampleCommon::Runtime runtime(device);
+    ExampleCommon::Buffers buffers;
     const std::vector<int32_t> positiveRow{0, 2, 3}, positiveSource{0, 1, 0};
     const std::vector<int32_t> negativeRow{0, 1, 3}, negativeSource{1, 0, 1};
     const std::vector<float> positiveInverse{0.5F, 1.0F}, negativeInverse{1.0F, 0.5F};
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     passed &= aclnnCsrSignedCrossMeanPackFused(dPositiveRow, dPositiveSource, dNegativeRow, dNegativeSource, dFeatures,
                                                dPositiveInverse, dNegativeInverse, dOutput, 2, 3, 3, channels, 2,
                                                workspace, bytes, runtime.Stream()) == ACL_SUCCESS;
-    GraphMessageExample::CopyOut(&output, dOutput, runtime.Stream());
-    passed &= GraphMessageExample::Matches(output, expected);
+    ExampleCommon::CopyOut(&output, dOutput, runtime.Stream());
+    passed &= ExampleCommon::Matches(output, expected);
     return passed ? 0 : 1;
 }

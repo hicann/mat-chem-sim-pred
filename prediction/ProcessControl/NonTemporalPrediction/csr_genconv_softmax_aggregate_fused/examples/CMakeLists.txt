@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# Licensed under the CANN Open Software License Agreement Version 2.0.
 add_executable(test_aclnn_csr_genconv_softmax_aggregate_fused
     test_aclnn_csr_genconv_softmax_aggregate_fused.cpp)
 target_include_directories(test_aclnn_csr_genconv_softmax_aggregate_fused PRIVATE
@@ -16,5 +18,7 @@ target_link_libraries(test_aclnn_csr_genconv_softmax_aggregate_fused PRIVATE
     csr_genconv_softmax_aggregate_fused_host ascendcl ${ASCEND_DRIVER_LIBS})
 add_test(NAME csr_genconv_softmax_aggregate_smoke
     COMMAND test_aclnn_csr_genconv_softmax_aggregate_fused 0)
+set(_ld_library_path
+    "${CMAKE_BINARY_DIR}:${CMAKE_BINARY_DIR}/lib:${ASCEND_CANN_PACKAGE_PATH}/lib64:$ENV{LD_LIBRARY_PATH}")
 set_tests_properties(csr_genconv_softmax_aggregate_smoke PROPERTIES
-    ENVIRONMENT "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}:${CMAKE_BINARY_DIR}/lib:${ASCEND_CANN_PACKAGE_PATH}/lib64:$ENV{LD_LIBRARY_PATH}")
+    ENVIRONMENT "LD_LIBRARY_PATH=${_ld_library_path}")

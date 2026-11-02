@@ -6,11 +6,11 @@
 #include <cstdlib>
 #include <vector>
 
-#include "../../../acl_smoke_helpers.h"
+#include "../../../acl_smoke_common.h"
 #include "gemnet_quadruplet_geometry_fused_host.h"
 
-using MolecularGeometrySmoke::Check;
-using MolecularGeometrySmoke::CopyIn;
+using AclSmoke::Check;
+using AclSmoke::CopyIn;
 
 bool RunGeometryKernel(const std::vector<void*>& inputs, void* dCab, void* dAbd, void* dTheta, aclrtStream stream,
                        float& angleCab, float& angleAbd, float& theta)

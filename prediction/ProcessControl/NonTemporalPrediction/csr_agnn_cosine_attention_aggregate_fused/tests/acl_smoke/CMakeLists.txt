@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# Licensed under the CANN Open Software License Agreement Version 2.0.
 add_executable(test_csr_agnn_cosine_attention_aggregate_fused
     test_csr_agnn_cosine_attention_aggregate_fused.cpp)
 target_include_directories(test_csr_agnn_cosine_attention_aggregate_fused PRIVATE

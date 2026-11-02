@@ -11,7 +11,7 @@
 #include <limits>
 #include <vector>
 
-namespace SpectralSmoke
+namespace AclSmoke
 {
 inline void Check(aclError error, const char* operation)
 {
@@ -20,6 +20,12 @@ inline void Check(aclError error, const char* operation)
         std::fprintf(stderr, "%s failed: %d\n", operation, static_cast<int>(error));
         std::exit(1);
     }
+}
+
+inline void CopyIn(void** device, const void* host, size_t bytes)
+{
+    Check(aclrtMalloc(device, bytes, ACL_MEM_MALLOC_HUGE_FIRST), "malloc");
+    Check(aclrtMemcpy(*device, bytes, host, bytes, ACL_MEMCPY_HOST_TO_DEVICE), "copy");
 }
 
 class Session
@@ -80,6 +86,20 @@ class Buffer
     size_t bytes_;
 };
 
+inline int Validate(const std::vector<float>& actual, const std::vector<float>& expected)
+{
+    for (size_t index = 0; index < actual.size(); ++index)
+    {
+        if (std::fabs(actual[index] - expected[index]) > 1.0e-5F)
+        {
+            std::fprintf(stderr, "mismatch at %zu\n", index);
+            return 1;
+        }
+    }
+    std::puts("PASSED");
+    return 0;
+}
+
 using BasisWorkspace = uint64_t (*)(int64_t, int64_t, int64_t);
 using BasisLaunch = int32_t (*)(void*, void*, void*, void*, void*, int64_t, int64_t, int64_t, void*, uint64_t, void*);
 
@@ -101,20 +121,6 @@ inline std::vector<float> ExpectedBasis(uint32_t planes)
         expected.insert(expected.end(), values.begin(), values.end());
     }
     return expected;
-}
-
-inline int Validate(const std::vector<float>& actual, const std::vector<float>& expected)
-{
-    for (size_t index = 0; index < actual.size(); ++index)
-    {
-        if (std::fabs(actual[index] - expected[index]) > 1.0e-5F)
-        {
-            std::fprintf(stderr, "mismatch at %zu\n", index);
-            return 1;
-        }
-    }
-    std::puts("PASSED");
-    return 0;
 }
 
 inline int RunBasis(int argc, char** argv, const BasisApi& api)
@@ -144,4 +150,4 @@ inline int RunBasis(int argc, char** argv, const BasisApi& api)
     outputData.CopyTo(output);
     return Validate(output, expected);
 }
-}  // namespace SpectralSmoke
+}  // namespace AclSmoke

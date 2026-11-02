@@ -2,16 +2,18 @@
  * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * Licensed under the CANN Open Software License Agreement Version 2.0.
  */
-#ifndef POINTNET2_GEOMETRY_EXAMPLE_COMMON_H
-#define POINTNET2_GEOMETRY_EXAMPLE_COMMON_H
+#ifndef EXAMPLE_COMMON_H
+#define EXAMPLE_COMMON_H
 
 #include <acl/acl.h>
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
 
-namespace PointNet2GeometryExample
+namespace ExampleCommon
 {
 inline void Check(aclError error, const char* operation)
 {
@@ -64,6 +66,14 @@ class Runtime
     aclrtStream stream_ = nullptr;
 };
 
+template <typename T>
+void CopyOut(std::vector<T>* host, void* device, aclrtStream stream)
+{
+    Check(aclrtSynchronizeStream(stream), "synchronize");
+    const size_t bytes = host->size() * sizeof(T);
+    Check(aclrtMemcpy(host->data(), bytes, device, bytes, ACL_MEMCPY_DEVICE_TO_HOST), "copy output");
+}
+
 class Buffers
 {
    public:
@@ -95,14 +105,35 @@ class Buffers
     template <typename T>
     void CopyOut(std::vector<T>* host, void* device, aclrtStream stream)
     {
-        Check(aclrtSynchronizeStream(stream), "synchronize");
-        const size_t bytes = host->size() * sizeof(T);
-        Check(aclrtMemcpy(host->data(), bytes, device, bytes, ACL_MEMCPY_DEVICE_TO_HOST), "copy from device");
+        ExampleCommon::CopyOut(host, device, stream);
     }
 
    private:
     std::vector<void*> values_;
 };
-}  // namespace PointNet2GeometryExample
 
-#endif
+inline void CopyOutput(std::vector<float>* output, const void* deviceOutput)
+{
+    const size_t bytes = output->size() * sizeof(float);
+    Check(aclrtMemcpy(output->data(), bytes, deviceOutput, bytes, ACL_MEMCPY_DEVICE_TO_HOST), "copy output");
+}
+
+inline bool Matches(const std::vector<float>& actual, const std::vector<float>& expected, float tolerance = 1.0e-5F)
+{
+    if (actual.size() != expected.size())
+    {
+        return false;
+    }
+    for (size_t index = 0; index < actual.size(); ++index)
+    {
+        if (std::fabs(actual[index] - expected[index]) > tolerance)
+        {
+            std::fprintf(stderr, "mismatch at %zu: %.6f != %.6f\n", index, actual[index], expected[index]);
+            return false;
+        }
+    }
+    return true;
+}
+}  // namespace ExampleCommon
+
+#endif  // EXAMPLE_COMMON_H
