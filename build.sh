@@ -18,7 +18,8 @@ set -eo pipefail
 # ---------------------------------------------------------------------------
 for _arg in "$@"; do
     case "$_arg" in
-        --list|--list-ops|--help|-h|--python|--python-tests|--python-tests=*|--reference-test)
+        --list | --list-ops | --help | -h | -f | --test | --build-only | --all | --ops=* | \
+            --python | --python-tests | --python-tests=* | --reference-test)
             REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
             exec bash "$REPO_ROOT/scripts/build_main.sh" "$@" ;;
     esac
@@ -372,86 +373,6 @@ if [ "$LIST_ONLY" = true ]; then
     exit 0
 fi
 
-# 处理 -f 模式：从文件列表增量编译
-if [ -n "$FILELIST" ]; then
-    if [ ! -f "$FILELIST" ]; then
-        echo "ERROR: file list not found: $FILELIST"
-        exit 1
-    fi
-
-    echo "[INFO] Reading file list: $FILELIST"
-
-    # 跳过检查：纯 .md 文档变更既无编译产物也无可测算子，直接短路退出（不区分是否 --test）。
-    # 此前 --test 分支只打印日志不退出，把文档 PR 放大成一次完整构建，
-    # 叠加算子侧 CMake 环境探测失败后，导致纯文档 PR 门禁变红。
-    if [ "$SKIP_CHECK" = false ] && should_skip_docs_only "$FILELIST"; then
-        echo "[SKIP] File list contains only .md files, skip build and test"
-        mkdir -p build_out 2>/dev/null || true
-        touch build_out/skip_build.run 2>/dev/null || true
-        exit 0
-    fi
-
-    # 从文件列表提取受影响的算子（含 COMMON_DIRS 检查）
-    mapfile -t FILELIST_RESULT < <(resolve_operators_from_filelist "$FILELIST" "$COMMON_DIRS")
-
-    # ALL（共享目录变更）按 --scope 限定，只重建该批算子而非全仓
-    if [ "${#FILELIST_RESULT[@]}" -gt 0 ] && [ "${FILELIST_RESULT[0]}" = "ALL" ]; then
-        echo "[INFO] Common directory changed, building operators in scope: ${SCOPE:-<all>}"
-        for op in "${ALL_OPERATORS[@]}"; do
-            if [ -z "$SCOPE" ] || [[ "$op" == "$SCOPE"* ]]; then
-                OPERATORS+=("$op")
-            fi
-        done
-    else
-        # 过滤空行并按 --scope 限定范围
-        for op in "${FILELIST_RESULT[@]}"; do
-            [ -z "$op" ] && continue
-            if [ -z "$SCOPE" ] || [[ "$op" == "$SCOPE"* ]]; then
-                OPERATORS+=("$op")
-            fi
-        done
-    fi
-
-    if [ ${#OPERATORS[@]} -eq 0 ]; then
-        echo "[SKIP] No affected operators found in file list"
-        mkdir -p build_out 2>/dev/null || true
-        touch build_out/skip_build.run 2>/dev/null || true
-        exit 0
-    fi
-
-    echo "[INFO] Affected operators: ${#OPERATORS[@]}"
-    printf '  %s\n' "${OPERATORS[@]}"
-fi
-
-# 处理 --ops= 模式：按算子名编译
-if [ -n "$OPS_BY_NAME" ]; then
-    IFS=',' read -ra name_arr <<< "$OPS_BY_NAME"
-    for name in "${name_arr[@]}"; do
-        name="${name#"${name%%[![:space:]]*}"}"  # 去前导空格（不依赖 xargs）
-        name="${name%"${name##*[![:space:]]}"}"   # 去尾部空格
-        if ! resolved=$(resolve_operator "$name"); then
-            echo "[WARN] Operator not found: $name"
-            continue
-        fi
-        OPERATORS+=("$resolved")
-    done
-fi
-
-# 确定操作列表
-if [ "$BUILD_ALL" = true ] || ([ "$CLEAN_MODE" = true ] && [ ${#OPERATORS[@]} -eq 0 ]); then
-    if [ ${#ALL_OPERATORS[@]} -eq 0 ]; then
-        echo "ERROR: no operators discovered — check directory structure"
-        exit 1
-    fi
-    OPERATORS=("${ALL_OPERATORS[@]}")
-fi
-
-# 无算子时显示帮助
-if [ ${#OPERATORS[@]} -eq 0 ]; then
-    usage
-    exit 0
-fi
-
 # 清理模式
 if [ "$CLEAN_MODE" = true ]; then
     for op in "${OPERATORS[@]}"; do
@@ -461,31 +382,3 @@ if [ "$CLEAN_MODE" = true ]; then
     echo "Clean done: ${#OPERATORS[@]} operator(s)."
     exit 0
 fi
-
-# 编译模式
-# 探测 GTest：缺失且确有算子需要 UT 时，一次性告警并跳过 UT
-if gtest_available; then
-    HAS_GTEST=true
-fi
-if [ "$RUN_TEST" = true ] && [ "$HAS_GTEST" != true ]; then
-    for op in "${OPERATORS[@]}"; do
-        if [ -d "$op/tests" ]; then
-            echo "[WARN] GTest not found; unit tests are skipped (-DBUILD_TESTS=OFF)"
-            break
-        fi
-    done
-fi
-
-failed=0
-succeeded=0
-for op in "${OPERATORS[@]}"; do
-    if build_single "$op"; then
-        succeeded=$((succeeded + 1))
-    else
-        failed=$((failed + 1))
-    fi
-done
-
-echo "----------------------------------------------------------------"
-echo "Done: $succeeded succeeded, $failed failed."
-[ "$failed" -eq 0 ] || exit 1
