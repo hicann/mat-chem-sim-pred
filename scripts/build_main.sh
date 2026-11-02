@@ -35,16 +35,22 @@ usage() {
     cat <<'EOF'
 用法: bash build.sh [选项]
 
-已由新入口接管：
-  --list [--backend=ascendc|pypto|all]   列出参与构建的算子
-  --python <operator>                    Python 算子 pytest
-  --python-tests[=cpu|npu|all]           跑受影响的 Python 与 reference 测试
-  -f <filelist> [--test] [--scope=前缀]   从变更清单增量编译（受 scope 限定）
-  --ops=a,b                              按算子名编译
-  --all                                  编译全部算子
-  --help                                 显示本帮助
+常用：
+  --list [--backend=ascendc|pypto|all]    列出参与构建的算子
+  <operator>                              编译单个算子
+  -f <filelist> [--test] [--scope=前缀]    从变更清单增量编译（受 scope 限定）
+  --ops=a,b                               按算子名编译
+  --all                                   编译全部算子
+  --clean [operator ...]                  清理算子构建产物
 
-其余选项（--build/--test/--reference-test/--package 等）仍由 build.sh 的旧实现处理。
+测试：
+  --python <operator>                     Python 算子 pytest
+  --python-tests[=cpu|npu|all]            跑受影响的 Python 与 reference 测试
+  --reference-test [前缀]                 跑 reference 测试
+  --ut=auto|required|off                  UT 策略
+  --shard=i/N                             按算子列表分片
+
+其它：--soc=、--backend=、--common-dirs=、--debug、--build-only、--skip-check、--help
 EOF
 }
 
@@ -161,6 +167,16 @@ main() {
             fi
             OPERATORS+=("$resolved")
         done
+    fi
+
+    if [ "$CLEAN_MODE" = true ]; then
+        local op
+        for op in "${OPERATORS[@]}"; do
+            clean_single "$op"
+        done
+        echo "----------------------------------------------------------------"
+        echo "Clean done: ${#OPERATORS[@]} operator(s)."
+        return 0
     fi
 
     if [ -n "$FILELIST" ] || [ "$BUILD_ALL" = true ] || [ ${#OPERATORS[@]} -gt 0 ]; then
